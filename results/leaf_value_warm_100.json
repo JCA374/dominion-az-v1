@@ -1,0 +1,27 @@
+{
+ "net": "runs/warm/net_0.npy",
+ "sims": 100,
+ "cpuct": 1.5,
+ "results": {
+  "net": {
+   "score_vs_ga_base": 0.499,
+   "ci95": 0.049,
+   "games": 400
+  },
+  "search lam=1": {
+   "score_vs_ga_base": 0.512,
+   "ci95": 0.049,
+   "games": 400
+  },
+  "search lam=0.5": {
+   "score_vs_ga_base": 0.515,
+   "ci95": 0.049,
+   "games": 400
+  },
+  "search lam=0": {
+   "score_vs_ga_base": 0.509,
+   "ci95": 0.049,
+   "games": 400
+  }
+ }
+}

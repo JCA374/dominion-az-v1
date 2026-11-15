@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lessons</title>
+<link rel="stylesheet" href="style.css?v=ea0a339d">
+<style>.box li { margin: 10px 0; }</style>
+</head>
+<body>
+<main>
+<h1>Lessons</h1>
+<p class="lede">What this project taught so far, newest first. Each lesson comes with the measurement behind it.</p>
+<div class="box"><h3>From this project</h3><ul id="new">
+  <li><b>Visit shares are a bad policy target when the options are nearly equal.</b> Run r1 trained on AlphaZero's
+    standard target. Dominion buys are usually within a few percent of each other, so the visits mostly echo the net's
+    prior plus the root's Dirichlet noise. One iteration later the net alone had dropped from 51.7% to 24.3% against the
+    GA base. Run r2 trains on the search's chosen buy instead (expert iteration), without root noise.</li>
+  <li><b>A weak value net makes more search worse, not better.</b> With the warm-started net's value alone at the
+    leaves, the search scored 51% → 53% → 48% against the GA base at 100 → 400 → 1,600 simulations: the more it
+    searched, the more it chased the value net's noise. Half value net, half GA rollout scored 52% → 58% → 60%.
+    (400–600 games each, ±4–5%.)</li>
+  <li><b>Self-play from a weak net collapses fast.</b> In a smoke test (net warm-started on only 600 games, 50
+    simulations), one iteration of training on its own search's choices took it from 62% to 0% against the bots:
+    the search, guided by a near-random net, recommended buying Curses and passing, and the net learned exactly that.
+    A good warm start and enough simulations come first.</li>
+  <li><b>Imitation is easy, prediction is hard.</b> The net copies the GA's buys 98% of the time after 8 epochs, but
+    its prediction of the winner stays at a mean squared error of 0.60 (1.0 = no idea): Dominion between two similar
+    players stays close to a coin flip until late.</li>
+  <li><b>Check the plumbing against the old code.</b> A test plays 20 games with GA seats through the new C agent and
+    through dominion-v1's own <code>ga_play_one</code>: same scores, winners and turns. So "GA base" here is exactly
+    the evolved genome, not a re-implementation.</li>
+</ul></div>
+</main>
+<script src="site.js?v=95be1df3"></script>
+<script src="common.js?v=448bd7f6"></script>
+<script src="project.js?v=8076d324"></script>
+</body>
+</html>

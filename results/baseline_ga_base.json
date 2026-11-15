@@ -1,0 +1,18 @@
+{
+ "t": "2026-11-15 22:09:49",
+ "label": "GA base genome",
+ "note": "portfolio-v2 specialist chosen per kingdom; buys by its evolved priority list",
+ "policy": null,
+ "n": 1000,
+ "score": 0.5,
+ "ci": [
+  0.4691,
+  0.5309
+ ],
+ "big_money": 0.84,
+ "smithy_bm": 0.715,
+ "witch_bm": 0.6425,
+ "sims": null,
+ "lam": 0.5,
+ "secs": 1
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it sees</title>
+<link rel="stylesheet" href="style.css?v=ea0a339d">
+<style>
+  table.t td, table.t th { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+  img.frame { width: 100%; max-width: 800px; border: 1px solid var(--line); border-radius: 8px; }
+</style>
+</head>
+<body>
+<main>
+<h1>How it sees</h1>
+<p class="lede">At every buy the network gets 175 numbers, all from the point of view of the player who is buying, and
+only things that player could know at a real table: what each player owns is public (every buy and gain is seen), and
+your own draw pile's <i>contents</i> are known even though its <i>order</i> is not. Nothing about the order of any
+deck or the opponent's hand goes in.</p>
+<table class="t">
+  <tr><th>inputs</th><th>count</th><th>meaning (scaled)</th></tr>
+  <tr><td>my cards</td><td>33</td><td>how many of each card I own, all zones (÷ 10)</td></tr>
+  <tr><td>my draw pile</td><td>33</td><td>how many of each card are still in my draw pile, i.e. what my next hands come from (÷ 10)</td></tr>
+  <tr><td>their cards</td><td>33</td><td>how many of each card the opponent owns (÷ 10)</td></tr>
+  <tr><td>supply</td><td>33</td><td>cards left in each pile (÷ 10)</td></tr>
+  <tr><td>in this game</td><td>33</td><td>1 if the card is in this kingdom / supply</td></tr>
+  <tr><td>this turn</td><td>2</td><td>coins (÷ 8) and buys left (÷ 2)</td></tr>
+  <tr><td>clock</td><td>2</td><td>my turns and their turns played (÷ 20)</td></tr>
+  <tr><td>score</td><td>3</td><td>my VP, their VP, the difference</td></tr>
+  <tr><td>ending</td><td>2</td><td>Provinces left (÷ 8), empty supply piles (÷ 3)</td></tr>
+  <tr><td>seat</td><td>1</td><td>1 if I am the first player (ties go to the player with fewer turns)</td></tr>
+</table>
+<p>The same 175 numbers are computed inside the search for every leaf, from the point of view of whoever is buying
+there (me or the opponent), in a determinized copy of the game. A leaf's features can mention the opponent's hand only
+through "coins this turn" when the opponent is the buyer, and that hand was dealt at random by the determinization,
+not taken from the real game.</p>
+<h2>What the search sees that the net doesn't</h2>
+<p>The search plays real games forward in the engine, so it sees exact consequences: reshuffle timing, Witch curses
+landing, piles running out. That's why the search is stronger than the net alone, and why the net is trained to
+imitate the search.</p>
+<h2>An example frame</h2>
+<p>From the <a href="play.html">Play</a> tab: each frame is one buy decision. The bar shows each deck's composition. For a
+searching player the blue line shows how the 400 simulations were split and the search's estimate of its win chance.</p>
+<img class="frame" src="frame_example.png" alt="A frame from a game clip: two decks, buys and the search's visit shares">
+</main>
+<script src="site.js?v=95be1df3"></script>
+<script src="common.js?v=448bd7f6"></script>
+<script src="project.js?v=8076d324"></script>
+</body>
+</html>

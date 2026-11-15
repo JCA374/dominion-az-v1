@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The model</title>
+<link rel="stylesheet" href="style.css?v=ea0a339d">
+<style>
+  .fig { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 16px 0; overflow-x: auto; }
+  .fig svg { width: 100%; height: auto; min-width: 560px; display: block; }
+  .fig svg text { fill: var(--ink); font: 13px system-ui, sans-serif; }
+  .fig svg .m { fill: var(--muted); font-size: 11.5px; }
+  .fig svg .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+  .fig svg .me { fill: var(--band); stroke: var(--accent); stroke-width: 1.5; }
+  .fig svg .opp { fill: none; stroke: var(--warn); stroke-width: 1.5; }
+  .fig svg .leaf { fill: none; stroke: var(--good); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .fig svg .ln { stroke: var(--muted); stroke-width: 1.3; fill: none; }
+  .fig svg .acc { stroke: var(--accent); stroke-width: 2.2; fill: none; }
+  .fig figcaption { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  table.t td, table.t th { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: .9em; }
+  ol li, ul li { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>The model</h1>
+<p class="lede">Three parts work together: a <b>search</b> that decides each buy by playing the game forward hundreds of
+times, a small <b>neural network</b> that tells the search which buys look promising and how good a position is, and the
+<b>GA genome</b> from the earlier evolution project, which plays everything that is not a buy (which action to play,
+what to trash with Chapel, what to gain with Workshop…). Training makes the network learn from the search, so the next
+search starts from better guesses.</p>
+
+<h2>Why Dominion needs a special kind of search</h2>
+<p>In chess, a position is a position. In Dominion, at the moment you buy you don't know the order of your own draw pile
+or what is in the opponent's hand. Two classic answers:</p>
+<ul>
+  <li><b>Chance nodes</b>: one branch per possible draw. A 5-card hand from a 15-card deck already has thousands of
+    outcomes, so the tree explodes.</li>
+  <li><b>Determinization</b>, used here: before each simulation, deal the hidden cards anew at random (the engine's
+    <code>de_hide</code>: shuffle my draw pile; put the opponent's hand back into their deck, shuffle, deal them a new
+    hand). The tree's nodes stand for what <i>I can know</i> (the sequence of buys so far), not for the exact cards, so
+    every simulation lands in the same tree and their results add up. Averaged over 400 deals, the value of a buy is its
+    expected value <b>over the luck of the draw</b>. This is <b>information-set MCTS</b> (IS-MCTS).</li>
+</ul>
+<p>All the decks' contents are known in Dominion (every buy is public), only the order is hidden, which is the case where
+determinization works best.</p>
+
+<div class="fig">
+<svg viewBox="0 0 900 380" role="img" aria-label="IS-MCTS: one simulation">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
+  <!-- step 1 -->
+  <rect class="box" x="10" y="20" width="200" height="120" rx="10"/>
+  <text x="24" y="44" font-weight="600">1 · Deal the unknowns</text>
+  <text class="m" x="24" y="66">copy the real game, then</text>
+  <text class="m" x="24" y="84">shuffle my draw pile,</text>
+  <text class="m" x="24" y="102">re-deal the opponent's hand</text>
+  <text class="m" x="24" y="120">(new random deal every time)</text>
+  <path class="ln" d="M210,80 L250,80" marker-end="url(#ar)"/>
+  <!-- tree -->
+  <rect class="me" x="330" y="20" width="120" height="40" rx="8"/>
+  <text x="348" y="45">My buy: $6</text>
+  <path class="acc" d="M390,60 L300,120"/><path class="ln" d="M390,60 L390,120"/><path class="ln" d="M390,60 L480,120"/>
+  <text class="m" x="268" y="98">Gold</text><text class="m" x="396" y="98">Smithy</text><text class="m" x="440" y="98">nothing</text>
+  <rect class="opp" x="250" y="120" width="110" height="40" rx="8"/>
+  <text x="262" y="145">Their buy</text>
+  <path class="acc" d="M305,160 L250,220"/><path class="ln" d="M305,160 L350,220"/>
+  <text class="m" x="225" y="196">Province</text><text class="m" x="335" y="196">Silver</text>
+  <rect class="me" x="190" y="220" width="120" height="40" rx="8"/>
+  <text x="206" y="245">My next buy</text>
+  <path class="acc" d="M250,260 L250,300"/>
+  <rect class="leaf" x="190" y="300" width="130" height="44" rx="8"/>
+  <text x="200" y="320">new leaf: ask the</text><text x="200" y="337">net + play it out</text>
+  <text class="m" x="520" y="40">blue = my decisions, orange = theirs</text>
+  <text class="m" x="520" y="58">only buys are nodes; every action,</text>
+  <text class="m" x="520" y="76">gain and trash in between is played</text>
+  <text class="m" x="520" y="94">by the GA genome inside the copy</text>
+  <!-- step 3 -->
+  <rect class="box" x="520" y="130" width="360" height="110" rx="10"/>
+  <text x="534" y="154" font-weight="600">2 · Walk down, pick by PUCT</text>
+  <text class="m" x="534" y="176">score = average result so far (exploit)</text>
+  <text class="m" x="534" y="194">+ 1.5 × net's prior × √(visits) / (1 + child visits)</text>
+  <text class="m" x="534" y="212">only buys legal in <tspan font-style="italic">this</tspan> deal compete (coins differ</text>
+  <text class="m" x="534" y="230">between deals, so the same node can offer other buys)</text>
+  <rect class="box" x="520" y="255" width="360" height="110" rx="10"/>
+  <text x="534" y="279" font-weight="600">3 · Score the leaf, back up</text>
+  <text class="m" x="534" y="301">value = ½ × net's estimate + ½ × the result of</text>
+  <text class="m" x="534" y="319">finishing this game with the GA genome buying.</text>
+  <text class="m" x="534" y="337">Add it to every buy on the path (as a loss for</text>
+  <text class="m" x="534" y="355">the opponent's nodes). Repeat 400 times.</text>
+  <path class="ln" d="M320,322 L515,310" marker-end="url(#ar)"/>
+</svg>
+<figcaption>One simulation. After 400 of them, the buy with the most visits is played. Each simulation costs about
+10–25 µs in C, so a buy takes a few milliseconds and a whole game about half a second.</figcaption>
+</div>
+
+<h2>The network</h2>
+<p>A plain multi-layer perceptron, small enough to run inside the C search 400 times per buy:</p>
+<table class="t">
+  <tr><th>layer</th><th>size</th><th>what it is</th></tr>
+  <tr><td>input</td><td>175</td><td>what the buyer knows (see <a href="senses.html">How it sees</a>)</td></tr>
+  <tr><td>hidden 1</td><td>128, ReLU</td><td></td></tr>
+  <tr><td>hidden 2</td><td>128, ReLU</td><td></td></tr>
+  <tr><td>policy head</td><td>34 logits</td><td>one per card (33) + "buy nothing"; masked to the buys that are possible</td></tr>
+  <tr><td>value head</td><td>1, tanh</td><td>expected result for the buyer: +1 win, 0 shared, −1 loss</td></tr>
+</table>
+<p class="muted">43,555 weights. Trained in numpy (no GPU on this machine) with Adam; the forward pass in C is checked
+against numpy by a test.</p>
+
+<h2>How it learns</h2>
+<ol>
+  <li><b>Warm start (iteration 0).</b> 12,000 games of the GA genome (against itself and the three bots) give
+    408,000 buy decisions. The net learns to copy the GA's buy (it ends up agreeing 98% of the time) and to predict who
+    wins. Starting from zero is the expensive part of AlphaZero; the GA lets the run skip most of it.</li>
+  <li><b>Self-play.</b> 1,000 games per iteration on random kingdoms: 70% search against search, 30% search against the
+    GA base genome. To explore, the first 6 turns' buys are drawn in proportion to the visit counts instead of taking
+    the most-visited one.</li>
+  <li><b>Training targets (expert iteration).</b> For every searched buy, the policy learns the buy the search chose
+    (the most-visited one), and the value learns the game's final result. Replay buffer: the last 5 iterations.
+    AlphaZero's own target, the visit shares, failed here (run r1): see below.</li>
+  <li><b>Evaluation</b> after every iteration, on the same 800 games each time: search and the bare net against Big Money,
+    Smithy-Big Money, Witch-Big Money and the GA base genome. Plus, now and then, a goal check on 1,600 games that are
+    never used for anything else.</li>
+</ol>
+
+<h2>Why the leaf value is half rollout</h2>
+<p>AlphaZero scores leaves with the value network alone. Here that failed. After the warm start the value net's error
+is still large (Dominion's outcome between two similar players is close to a coin flip until late in the game), and
+the search trusts its noise: with the net's value alone, more simulations made it <i>worse</i> (48% against the GA base
+at 1,600 simulations). Finishing each leaf's game with the GA genome is unbiased but noisy; the mix of the two won
+clearly (58% at 400 simulations, 60% at 1,600). This is AlphaGo's original recipe (value net + fast rollouts). Games
+in this engine take 0.2 ms, so rollouts are affordable. As the value net improves, the mix can move towards the net.
+The measurements are in the goal table on the <a href="index.html">Log</a>.</p>
+
+<h2>Why the target is the chosen buy, not the visit shares</h2>
+<p>In run r1 the net learned the search's visit shares, as in AlphaZero. In Dominion the values of the candidate buys
+are usually within a few percent of each other, so after 400 simulations the visits are spread mostly by the net's
+own prior and by the Dirichlet noise added at the root for exploration. The net learned that noise: alone, it fell from
+51.7% to 24.3% against the GA base after one iteration. The search's <i>decision</i> (the most-visited buy) is what
+measurably beats the GA (58%), so r2 teaches exactly that, without root noise. A third option, Gumbel AlphaZero's
+"completed Q" target, was tried in between: it is noise-free, but with the warm net's very sharp prior it hardly moves
+off the prior, so the net would learn nothing new.</p>
+
+<h2>What the GA genome still does</h2>
+<p>Every decision that is not a buy: which action to play next, Chapel/Sentry trashing, Workshop/Remodel/Artisan
+gains, Militia discards, Library skips… It is the specialist of dominion-v1's <code>portfolio-v2</code> best suited to
+the kingdom (ranked by its score against the bots, among those whose key cards are dealt). The comparison against
+the "GA base" is therefore fair: both sides play their action cards the same way, and only the buys differ.</p>
+</main>
+<script src="site.js?v=95be1df3"></script>
+<script src="common.js?v=448bd7f6"></script>
+<script src="project.js?v=8076d324"></script>
+</body>
+</html>

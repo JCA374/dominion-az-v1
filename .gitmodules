@@ -1,0 +1,6 @@
+[submodule "engine"]
+	path = engine
+	url = https://github.com/JCA374/dominion-engine
+[submodule "dominion-v1"]
+	path = dominion-v1
+	url = https://github.com/JCA374/dominion-v1

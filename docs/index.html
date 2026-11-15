@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dominion AZ-light</title>
+<link rel="stylesheet" href="style.css?v=ea0a339d">
+</head>
+<body>
+<main>
+<header class="hero">
+  <h1>Teaching a Dominion player to buy better by searching through the shuffles it can't see</h1>
+  <p class="lede">A light version of AlphaZero for the card game Dominion (base set, Steam rules). At every buy it runs
+an <b>information-set Monte Carlo tree search</b>: each of its 400 simulations deals the hidden cards anew (its own draw
+order, the opponent's hand and deck), so the search averages over the luck of the draw instead of guessing it. A small
+neural network guides the search and learns from it in self-play. <b>The goal:</b> win 65% of 1,000 fresh games
+head to head against the evolved GA genome it started from (same play of action cards; only the buys differ).</p>
+  <p class="countdown" id="countdown"></p>
+  <p class="muted" id="updated"></p>
+</header>
+<section class="cards" id="cards"></section>
+<section>
+  <h2>Goal table</h2>
+  <p class="muted">Every agent measured on episodes it never saw. The 95% interval is a Wilson interval.</p>
+  <div class="tablewrap"><table class="t" id="goaltable"></table></div>
+</section>
+<section>
+  <h2>Progress</h2>
+  <div class="chartbox"><div class="h"><canvas id="chart"></canvas></div></div>
+  <p class="muted small" id="chartnote"></p>
+</section>
+<section>
+  <h2>Log <span class="muted small">newest first · replays play once, click to watch again</span></h2>
+  <div id="log"></div>
+</section>
+</main>
+<footer>Updated automatically every 15 minutes. Numbers are measured on fresh episodes, not estimated.</footer>
+<script src="site.js?v=95be1df3"></script>
+<script src="common.js?v=448bd7f6"></script>
+<script src="project.js?v=8076d324"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js?v=fb3b558a"></script>
+</body>
+</html>

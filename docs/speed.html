@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speed</title>
+<link rel="stylesheet" href="style.css?v=ea0a339d">
+<style>table.t td, table.t th { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; } td.num { text-align: right; font-variant-numeric: tabular-nums; }</style>
+</head>
+<body>
+<main>
+<h1>Speed</h1>
+<p class="lede">Everything that runs per game is C: the engine, the GA genome, the tree search and the network's
+forward pass (no Python inside a game). Python only hands out games to 7 worker processes and trains the network in
+numpy. The machine: a laptop with an 8-thread Intel i5-8250U (4 cores), 8 GB RAM, no GPU.</p>
+<h2>Pieces, measured</h2>
+<div class="tablewrap"><table class="t" id="pieces"></table></div>
+<p class="muted small" id="pnote"></p>
+<h2>Per iteration (from the run)</h2>
+<div class="tablewrap"><table class="t" id="iters"></table></div>
+<h2>Why it's fast enough</h2>
+<ul>
+  <li>The engine is a plain C struct (~20 KB per game), so a simulation copies the whole game with one assignment and
+    abandons it with a <code>longjmp</code> when it reaches a new leaf: nothing to allocate or free.</li>
+  <li>The search only branches on buys (about 22 per player per game); everything in between is played straight
+    through by the genome.</li>
+  <li>The network is 43,555 weights, about 44,000 multiply-adds per call, compiled with <code>-O3 -march=native</code>.</li>
+  <li>The first measurements without load: 9 µs per simulation with the net's value at the leaf; the GA rollout at
+    leaves makes a simulation 2–3× dearer but was worth it (see the Log's bake-off rows).</li>
+</ul>
+</main>
+<script src="site.js?v=95be1df3"></script>
+<script src="common.js?v=448bd7f6"></script>
+<script src="project.js?v=8076d324"></script>
+<script>
+(async () => {
+  const r = await get('results.json'); const s = r && r.speed;
+  if (s) {
+    const rows = [['One GA game (both players GA), C', s.ga_game_ms + ' ms'],
+      ['Net forward pass, called from Python (mostly ctypes overhead)', s.net_forward_us_incl_ctypes + ' µs'],
+      ['Search, leaf = net value: per simulation', s['search_lam1.0_us_per_sim'] + ' µs'],
+      ['Search, leaf = ½ net + ½ GA rollout: per simulation', s['search_lam0.5_us_per_sim'] + ' µs'],
+      ['A game, search (400 sims, mixed leaf) vs GA', s['search_lam0.5_game_s'] + ' s'],
+      ['Searched buys per game (one player)', s['search_lam0.5_buys_per_game']],
+      ['Training step, batch 512, numpy', s.train_step_ms_batch512 + ' ms']];
+    $('pieces').innerHTML = '<tr><th>what</th><th>time</th></tr>' + rows.map(([a, b]) => `<tr><td>${a}</td><td class="num">${b}</td></tr>`).join('');
+    $('pnote').textContent = `Measured ${s.t} on one core (${s.cpu_model}) while training was using the other 7, so these are slower than on an idle machine.`;
+  }
+  const st = await get('stats.json'); const st0 = await get('status.json');
+  const run = st0 && (st0.runs.find((x) => x.alive) || st0.runs[st0.runs.length - 1]);
+  const rows = (st && run && st[run.run] || []).filter((x) => x.t_iter !== '').slice(-8);
+  $('iters').innerHTML = '<tr><th>iter</th><th>self-play games/s</th><th>self-play</th><th>training</th><th>whole iteration (incl. evaluation)</th></tr>' +
+    rows.map((x) => `<tr><td>${x.iter}</td><td class="num">${(+x.games_per_s).toFixed(1)}</td><td class="num">${(+x.t_play).toFixed(0)} s</td><td class="num">${(+x.t_train).toFixed(0)} s</td><td class="num">${(+x.t_iter / 60).toFixed(1)} min</td></tr>`).join('');
+})();
+</script>
+</body>
+</html>

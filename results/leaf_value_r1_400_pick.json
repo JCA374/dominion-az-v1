@@ -1,0 +1,12 @@
+{
+ "net": "runs/r1/net_0.npy",
+ "sims": 400,
+ "cpuct": 1.5,
+ "results": {
+  "search lam=0.5": {
+   "score_vs_ga_base": 0.537,
+   "ci95": 0.04,
+   "games": 600
+  }
+ }
+}

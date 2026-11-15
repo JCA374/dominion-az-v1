@@ -1,0 +1,14 @@
+{
+ "t": "2026-11-15 22:11:11",
+ "cpu": 8,
+ "cpu_model": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+ "ga_game_ms": 0.265,
+ "net_forward_us_incl_ctypes": 186.9,
+ "search_lam1.0_us_per_sim": 60.73,
+ "search_lam1.0_game_s": 0.571,
+ "search_lam1.0_buys_per_game": 23.5,
+ "search_lam0.5_us_per_sim": 88.19,
+ "search_lam0.5_game_s": 0.78,
+ "search_lam0.5_buys_per_game": 22.1,
+ "train_step_ms_batch512": 120.67
+}

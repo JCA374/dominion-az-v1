@@ -1,0 +1,12 @@
+{
+ "t": "2026-11-15 21:55:00",
+ "score": 0.528,
+ "n": 600,
+ "ci": [
+  0.488,
+  0.5676
+ ],
+ "label": "search lam=1",
+ "note": "warm-start net, 400 simulations per buy, leaf value = 1 x net + 0 x GA rollout; vs GA base, 300 kingdoms both seats",
+ "policy": "runs/warm/net_0.npy"
+}

@@ -1,0 +1,1 @@
+window.SITE = {"title": "Dominion AZ-light", "icon": "\ud83c\udccf", "repo": "JCA374/dominion-az-v1", "tabs": [["index.html", "Log"], ["model.html", "The model"], ["senses.html", "How it sees"], ["play.html", "Play"], ["speed.html", "Speed"], ["lessons.html", "Lessons"]]};
