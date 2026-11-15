@@ -85,7 +85,7 @@ def models():
     if b and os.path.exists(os.path.join(ROOT, b["champion"])):
         it = int(b["champion"].split("_")[-1][:-4])
         out.append({"id": f"best-{it}", "label": f"Best so far (iter {it})", "path": "search:" + b["champion"],
-                    "note": f"Highest score against the GA base in the per-iteration evaluation: {b['check']}. "
+                    "note": f"Highest score against the GA base in the per-iteration evaluation: {b['check'] if isinstance(b['check'], str) else format(b['check']['score'], '.1%')}. "
                             "Best of many evaluations, so flattered by luck."})
     nets = [p for p in nets if int(p.split("_")[-1][:-4]) % EVERY == 0]
     if len(nets) > 1:

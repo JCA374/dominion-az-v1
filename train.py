@@ -269,8 +269,8 @@ def main():
               flush=True)
         if ev_s["GA base"] > best:
             best = ev_s["GA base"]
-            log.event("goal_best", iter=it, check=f"search vs GA base {best:.3f}", champion=p,
-                      search=fmt_eval(ev_s))
+            log.event("goal_best", iter=it, check={"score": round(best, 4), "n": 2 * 2 * cfg["eval_kingdoms"]},
+                      champion=p, search=fmt_eval(ev_s))
         save_ckpt(d, params, opt, it, best)
         if it % cfg["goal_every"] == 0:          # fresh games, never used elsewhere (the goal table)
             import subprocess

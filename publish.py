@@ -131,7 +131,7 @@ def build():
         alive = subprocess.run(['pgrep', '-f', CFG.get('alive_pattern', '^.venv/bin/python .* --run {run}( |$)').format(run=name)],
                                capture_output=True).returncode == 0
         best_key = CFG.get('best_event', 'goal_best')
-        best = max((e['check'] for e in events if e['kind'] == best_key and 'check' in e), default=None,
+        best = max((e['check'] for e in events if e['kind'] == best_key and isinstance(e.get('check'), dict)), default=None,
                    key=lambda c: c.get('landed', c.get('score', 0)))
         runs.append({'run': name, 'note': (cur or {}).get('note', ''), 'alive': alive, 'last': rows[-1] if rows else {},
                      'n_stages': len((cur or {}).get('stages', [])), 'best_goal': best,
