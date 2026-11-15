@@ -43,6 +43,7 @@ CFG = {
     "eval_kingdoms": 50,    # per opponent, x 2 seeds x 2 seats
     "workers": max(1, os.cpu_count() - 1),
     "iterations": 1000,
+    "goal_every": 10,       # goal check (1,600 fresh games) every N iterations
 }
 OPPONENTS = ["Big Money", "Smithy-BM", "Witch-BM", "GA base"]
 BOTS = OPPONENTS[:3]
@@ -263,6 +264,13 @@ def main():
             log.event("goal_best", iter=it, check=f"search vs GA base {best:.3f}", champion=p,
                       search=fmt_eval(ev_s))
         save_ckpt(d, params, opt, it, best)
+        if it % cfg["goal_every"] == 0:          # fresh games, never used elsewhere (the goal table)
+            import subprocess
+            import sys
+            subprocess.run([sys.executable, "experiments/goal_check.py", p, "--name", f"{args.run}_iter{it}",
+                            "--label", f"{args.run} iteration {it} + search",
+                            "--note", f"{cfg['eval_sims']} sims, leaf {cfg['lam']} net + {1 - cfg['lam']:g} rollout",
+                            "--sims", str(cfg["eval_sims"]), "--lam", str(cfg["lam"]), "--nh", str(nh)], check=False)
         it += 1
 
 
