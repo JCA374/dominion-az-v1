@@ -1,0 +1,18 @@
+{
+ "nh": 128,
+ "sims": 200,
+ "eval_sims": 200,
+ "cpuct": 1.5,
+ "temp_turns": 6,
+ "games": 1000,
+ "vs_ga_share": 0.3,
+ "buffer_iters": 5,
+ "epochs": 2,
+ "batch": 512,
+ "lr": 0.001,
+ "warm_games": 12000,
+ "warm_epochs": 8,
+ "eval_kingdoms": 50,
+ "workers": 7,
+ "iterations": 0
+}

@@ -1,0 +1,3 @@
+iter,hours,games,samples,buffer,policy_ce,policy_kl,value_mse,policy_acc,search_Big_Money,search_Smithy_BM,search_Witch_BM,search_GA_base,search_bots,net_Big_Money,net_Smithy_BM,net_Witch_BM,net_GA_base,net_bots,ga_Big_Money,ga_Smithy_BM,ga_Witch_BM,ga_GA_base,ga_bots,search_vs_ga_ci,selfplay_vs_ga,selfplay_turns,root_q,games_per_s,t_play,t_train,t_iter
+0,0.0443,0,408233,408233,0.0505,0.0505,0.6075,0.9856,0.895,0.7525,0.715,0.5825,0.7875,0.9,0.7275,0.7175,0.5175,0.7817,0.8725,0.6975,0.705,0.5,0.7583,0.0683,,,,,,,
+1,0.1636,1000,53632,53632,1.9085,0.8479,0.5043,0.3785,0.8675,0.755,0.665,0.575,0.7625,0.7025,0.6075,0.4225,0.2425,0.5775,0.8725,0.6975,0.705,0.5,0.7583,0.0685,0.1714,30.027,-0.0924,2.9886,334.6047,2.4008,429.2426
