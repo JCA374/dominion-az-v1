@@ -10,6 +10,7 @@
  "c_scale": 0.1,
  "games": 1000,
  "vs_ga_share": 0.3,
+ "vs_bot_share": 0.2,
  "buffer_iters": 5,
  "epochs": 2,
  "batch": 512,
@@ -18,5 +19,6 @@
  "warm_epochs": 8,
  "eval_kingdoms": 50,
  "workers": 7,
- "iterations": 1000
+ "iterations": 1000,
+ "goal_every": 10
 }
