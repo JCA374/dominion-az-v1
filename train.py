@@ -34,6 +34,7 @@ CFG = {
     "c_scale": 0.1,         # completed-Q target scale (target 1)
     "games": 1000,          # self-play games per iteration
     "vs_ga_share": 0.3,     # share of them against the GA base genome
+    "vs_bot_share": 0.0,    # share against Big Money / Smithy-BM / Witch-BM (r2 from iteration 6: 0.2)
     "buffer_iters": 5,
     "epochs": 2,
     "batch": 512,
@@ -232,11 +233,18 @@ def main():
         ti = time.time()
         path = os.path.join(d, f"net_{it - 1}.npy")
         rng = random.Random(f"az-v1 self {args.run} {it}")
-        from az.base import random_kingdom
+        from az.base import kingdom_for_bot, random_kingdom
         jobs = []
         for i in range(cfg["games"]):
-            jobs.append({"kingdom": random_kingdom(rng), "seed": rng.getrandbits(32), "seat": i % 2,
-                         "vs_ga": rng.random() < cfg["vs_ga_share"], "cfg": cfg, "params_path": path})
+            u = rng.random()
+            job = {"seed": rng.getrandbits(32), "seat": i % 2, "cfg": cfg, "params_path": path,
+                   "vs_ga": u < cfg["vs_ga_share"]}
+            if cfg["vs_ga_share"] <= u < cfg["vs_ga_share"] + cfg["vs_bot_share"]:
+                job["vs_bot"] = BOTS[i % 3]                  # keeps it honest against simple money play
+                job["kingdom"] = kingdom_for_bot(rng, job["vs_bot"])
+            else:
+                job["kingdom"] = random_kingdom(rng)
+            jobs.append(job)
         games = list(pool.imap_unordered(_self, jobs, chunksize=4))
         t_play = time.time() - ti
         vs = [g["result"] for g in games if g["vs_ga"]]

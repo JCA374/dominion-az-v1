@@ -36,7 +36,9 @@ def selfplay_game(job: dict) -> dict:
     g = base_genome(k)["ints"]
     me = Seat(SEARCH, g, params, sims=cfg["sims"], noise=bool(cfg["noise"]), temp_turns=cfg["temp_turns"],
               record=True)
-    if job.get("vs_ga"):
+    if job.get("vs_bot"):
+        other = Seat(GA, bot(job["vs_bot"], k))
+    elif job.get("vs_ga"):
         other = Seat(GA, g)
     else:
         other = Seat(SEARCH, g, params, sims=cfg["sims"], noise=bool(cfg["noise"]),
@@ -47,7 +49,7 @@ def selfplay_game(job: dict) -> dict:
     out = _records(r)
     out["result"] = outcome(r, job["seat"])
     out["turns"] = max(r["turns"])
-    out["vs_ga"] = bool(job.get("vs_ga"))
+    out["vs_ga"] = bool(job.get("vs_ga")) and not job.get("vs_bot")
     return out
 
 
