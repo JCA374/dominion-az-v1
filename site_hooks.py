@@ -19,7 +19,8 @@ from az import core
 from az.base import base_genome
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-RUN = "r1"
+RUN = "r2"
+EVERY = 10                     # the Play tab's "newest" model moves every EVERY iterations (clips are committed)
 W, H = 800, 450
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -86,6 +87,7 @@ def models():
         out.append({"id": f"best-{it}", "label": f"Best so far (iter {it})", "path": "search:" + b["champion"],
                     "note": f"Highest score against the GA base in the per-iteration evaluation: {b['check']}. "
                             "Best of many evaluations, so flattered by luck."})
+    nets = [p for p in nets if int(p.split("_")[-1][:-4]) % EVERY == 0]
     if len(nets) > 1:
         it = int(nets[-1].split("_")[-1][:-4])
         if not b or not b["champion"].endswith(f"net_{it}.npy"):
