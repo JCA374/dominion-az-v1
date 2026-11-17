@@ -40,3 +40,19 @@ python3 -m venv .venv && .venv/bin/pip install numpy pytest pillow
    checks on 1,600 games never used elsewhere.
 
 Goal: 65% head to head against the GA base genome (same action play; only the buys differ) on 1,000 fresh games.
+
+## Results (2026-11-17, training stopped)
+
+| Agent (1,000 fresh games vs the GA base, ±3%) | Score |
+|---|---|
+| GA base genome | 50% |
+| r2 iteration 20 + search | 65.2% (goal passed) |
+| r2 iteration 100–350 + search (400 sims, leaf ½ net + ½ GA rollout) | 69–70% |
+| r2 net 357 alone, no search | 66.7% |
+| r3 (value head trained on the search's root value), iteration 20 | 67.4% |
+| r4 (AlphaZero leaves: value head only), iteration 30 | 66.6% |
+
+Best agent: `runs/r2/net_357.npy` (or any r2 net from iteration 100 on) with 400 simulations and lam 0.5.
+What was tried after the plateau and why it stopped: the site's Lessons and Log tabs, and `results/bake_*`.
+More commands: `experiments/value_holdout.py` (value error on fresh games), `experiments/value_study.py`
+(value-target study), `goal_check.py --sims 0` (net alone) and `--bake` (a comparison, not a goal check).
