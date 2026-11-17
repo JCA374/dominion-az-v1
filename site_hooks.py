@@ -281,51 +281,65 @@ def _plt():
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    plt.rcParams.update({'font.size': 12, 'axes.titlesize': 13, 'axes.labelsize': 12, 'xtick.labelsize': 11,
+                         'ytick.labelsize': 11, 'axes.spines.top': False, 'axes.spines.right': False})
     return plt
 
 
+# Figures are shown one per row, up to ~900 px wide: draw them 9 inches wide at 120 dpi (1080 px), fonts >= 11 pt.
 def fig_arch(layers, out_png, title='Architecture'):
     """layers: [("input", 8), ("dense tanh", 64), ("dense tanh", 64), ("action logits", 4)] -> a box diagram with sizes."""
     plt = _plt()
-    fig, ax = plt.subplots(figsize=(7, 1.2 + 0.7 * len(layers)))
+    fig, ax = plt.subplots(figsize=(9, 1.0 + 0.9 * len(layers)))
     ax.axis('off')
     for i, (name, n) in enumerate(layers):
         y = len(layers) - 1 - i
-        w = 1 + 4 * (n / max(m for _, m in layers)) ** 0.5
-        ax.add_patch(plt.Rectangle((3 - w / 2, y - 0.3), w, 0.6, fc='#dbe4ff', ec='#3b5bdb'))
-        ax.text(3, y, f'{name}  ·  {n}', ha='center', va='center', fontsize=10)
+        w = 2.2 + 5 * (n / max(m for _, m in layers)) ** 0.5
+        ax.add_patch(plt.Rectangle((5 - w / 2, y - 0.32), w, 0.64, fc='#dbe4ff', ec='#3b5bdb', lw=1.5))
+        ax.text(5, y, f'{name}  ·  {n:,}', ha='center', va='center', fontsize=13)
         if i:
-            ax.annotate('', (3, y + 0.32), (3, y + 0.68), arrowprops=dict(arrowstyle='->', color='#6b6b70'))
-    ax.set_xlim(0, 6); ax.set_ylim(-0.6, len(layers) - 0.4)
-    ax.set_title(title)
-    fig.tight_layout(); fig.savefig(out_png, dpi=110); plt.close(fig)
+            ax.annotate('', (5, y + 0.34), (5, y + 0.66), arrowprops=dict(arrowstyle='->', color='#6b6b70', lw=1.5))
+    ax.set_xlim(0, 10); ax.set_ylim(-0.6, len(layers) - 0.4)
+    ax.set_title(title, fontsize=14)
+    fig.tight_layout(); fig.savefig(out_png, dpi=120); plt.close(fig)
 
 
 def fig_weight_hist(named_arrays, out_png, title='Weights per layer'):
-    """named_arrays: [("layer 1", ndarray), ...] -> one histogram per layer (shared x range)."""
+    """named_arrays: [("layer 1", ndarray), ...] -> one histogram per layer, two per row."""
     plt = _plt()
     import numpy as np
     n = len(named_arrays)
-    fig, axes = plt.subplots(1, n, figsize=(3 * n, 2.6), sharey=False)
-    axes = np.atleast_1d(axes)
-    lim = max(float(np.abs(a).max()) for _, a in named_arrays) or 1
+    cols = 2
+    rows = (n + 1) // 2
+    fig, axes = plt.subplots(rows, cols, figsize=(9, 3.0 * rows))
+    axes = np.atleast_1d(axes).ravel()
     for ax, (name, a) in zip(axes, named_arrays):
         a = np.asarray(a).ravel()
-        ax.hist(a, bins=40, range=(-lim, lim), color='#3b5bdb')
-        ax.set_title(f'{name}\n{a.size} values, std {a.std():.2f}', fontsize=9)
-        ax.tick_params(labelsize=7)
-    fig.suptitle(title); fig.tight_layout(); fig.savefig(out_png, dpi=110); plt.close(fig)
+        lim = float(np.percentile(np.abs(a), 99.5)) or 1
+        ax.hist(np.clip(a, -lim, lim), bins=50, color='#3b5bdb')
+        ax.set_title(f'{name}: {a.size:,} weights, std {a.std():.3f}')
+        ax.set_yticks([])
+    for ax in axes[n:]:
+        ax.axis('off')
+    fig.suptitle(title, fontsize=14); fig.tight_layout(); fig.savefig(out_png, dpi=120); plt.close(fig)
 
 
-def fig_bars(labels, values, out_png, title='', ylabel='', colors=None):
-    """A bar chart: e.g. action probabilities in a fixed situation, or input sensitivity (how much the output moves when
-    each input is nudged by one standard deviation)."""
+def fig_bars(labels, values, out_png, title='', ylabel='', colors=None, fmt='{:.2f}'):
+    """Horizontal bars, first label on top, value written at the end of each bar: e.g. action probabilities in a fixed
+    situation, or input sensitivity (how much the output moves when each input is nudged by one standard deviation).
+    ylabel names the value axis."""
     plt = _plt()
-    fig, ax = plt.subplots(figsize=(max(4, 0.6 * len(labels)), 3))
-    ax.bar(range(len(labels)), values, color=colors or '#3b5bdb')
-    ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=8)
-    ax.set_ylabel(ylabel); ax.set_title(title)
-    fig.tight_layout(); fig.savefig(out_png, dpi=110); plt.close(fig)
+    n = len(labels)
+    fig, ax = plt.subplots(figsize=(9, 1.2 + 0.36 * n))
+    ys = list(range(n))[::-1]
+    ax.barh(ys, values, color=colors or '#3b5bdb', height=0.7)
+    ax.set_yticks(ys); ax.set_yticklabels(labels)
+    top = max(values) if len(values) else 1
+    for y, v in zip(ys, values):
+        ax.text(v + top * 0.01, y, fmt.format(v), va='center', fontsize=10, color='#444')
+    ax.set_xlim(0, top * 1.12 if top > 0 else 1)
+    ax.set_xlabel(ylabel); ax.set_title(title)
+    fig.tight_layout(); fig.savefig(out_png, dpi=120); plt.close(fig)
 
 
 FEAT_GROUPS = ["own", "draw pile", "opp", "supply", "in game"]
@@ -402,8 +416,8 @@ def model_viz(out_dir):
     logits, v, _ = azn.forward(p, nh, X, L)
     prob = np.exp(logits - logits.max(1, keepdims=True)) * (L > 0)
     prob /= prob.sum(1, keepdims=True)
-    fig, axes = plt.subplots(2, 3, figsize=(12, 6))
-    for ax, (title, test) in zip(axes.ravel(), SITUATIONS):
+    rows_out = []                                  # (situation title, [(label, prob)])
+    for title, test in SITUATIONS:
         pick = None
         for i, (x, _, turn, k) in enumerate(rows):
             coins, prov, lead = round(x[E] * 8), round(x[E + 7] * 8), x[E + 6] * 10
@@ -411,21 +425,33 @@ def model_viz(out_dir):
                 pick = i
                 break
         if pick is None:
-            ax.axis("off")
-            ax.set_title(f"{title}: not in these games", fontsize=9)
+            rows_out.append((f"{title} (not in these games)", []))
             continue
         pr = prob[pick]
-        top = [a for a in np.argsort(-pr)[:6] if pr[a] > 0.005]
-        labels = ["nothing" if a == core.PASS else NAME[a] for a in top]
-        ax.barh(range(len(top))[::-1], [pr[a] for a in top], color="#3b5bdb")
-        ax.set_yticks(range(len(top))[::-1])
-        ax.set_yticklabels(labels, fontsize=8)
-        ax.set_xlim(0, 1)
-        ax.tick_params(labelsize=7)
-        x = X[pick]
-        ax.set_title(f"{title}\nturn {rows[pick][2]}, value {(v[pick] + 1) / 2 * 100:.0f}% win", fontsize=9)
+        top = [a for a in np.argsort(-pr)[:4] if pr[a] > 0.005]
+        rows_out.append((f"{title}, turn {rows[pick][2]}\nown win estimate {(v[pick] + 1) / 2 * 100:.0f}%",
+                         [("nothing" if a == core.PASS else NAME[a], float(pr[a])) for a in top]))
+    colors = ["#3b5bdb", "#74c0fc", "#ffa94d", "#ced4da"]
+    fig, ax = plt.subplots(figsize=(9, 1.3 + 0.75 * len(rows_out)))
+    for r, (title, parts) in enumerate(rows_out):
+        y = len(rows_out) - 1 - r
+        x0 = 0.0
+        for j, (lab, pv) in enumerate(parts):
+            ax.barh(y, pv, left=x0, color=colors[j % 4], height=0.62, edgecolor="white")
+            if pv >= 0.08:
+                ax.text(x0 + pv / 2, y, f"{lab} {pv:.0%}", ha="center", va="center", fontsize=11,
+                        color="white" if j == 0 else "#222")
+            x0 += pv
+        small = [f"{lab} {pv:.1%}" for lab, pv in parts if pv < 0.08]
+        if small:
+            ax.text(1.01, y, ", ".join(small), va="center", fontsize=9, color="#555")
+    ax.set_yticks(range(len(rows_out))[::-1])
+    ax.set_yticklabels([t for t, _ in rows_out], fontsize=10)
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("probability the net gives each buy (no search)")
+    ax.set_title("What it wants to buy in six situations")
     fig.tight_layout()
-    fig.savefig(paths["situations"], dpi=100)
+    fig.savefig(paths["situations"], dpi=120)
     plt.close(fig)
     sd = X.std(0)
     base = prob
@@ -442,5 +468,5 @@ def model_viz(out_dir):
     names = feature_names()
     top = np.argsort(-eff)[:25]
     fig_bars([names[j] for j in top], [eff[j] for j in top], paths["sensitivity"],
-             title="Change in the buy distribution per +1 std of one input", ylabel="total variation")
+             title="How much the buy choice moves when one input rises by 1 std", ylabel="total variation (0 = no change, 1 = a different buy)", fmt="{:.3f}")
     return [{"src": f"model/{k}.png", "title": t, "caption": c} for k, t, c in figs]
