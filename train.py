@@ -45,6 +45,9 @@ CFG = {
     "workers": max(1, os.cpu_count() - 1),
     "iterations": 1000,
     "goal_every": 10,       # goal check (1,600 fresh games) every N iterations
+    "prior_temp": 1.0,      # search prior = softmax(logits / prior_temp) ...
+    "prior_eps": 0.0,       # ... mixed with this share of uniform (a sharp net starves PUCT of exploration)
+    "vq": 0.0,              # value target = (1 - vq) * game result + vq * the search's root value
 }
 OPPONENTS = ["Big Money", "Smithy-BM", "Witch-BM", "GA base"]
 BOTS = OPPONENTS[:3]
@@ -93,7 +96,8 @@ def eval_jobs(cfg: dict) -> list[dict]:
 
 def run_eval(pool, cfg, agent: str, params_path: str | None) -> dict:
     jobs = [dict(j, agent=agent, params_path=params_path, sims=cfg["eval_sims"], nh=cfg["nh"],
-                 cpuct=cfg["cpuct"], lam=cfg["lam"]) for j in eval_jobs(cfg)]
+                 cpuct=cfg["cpuct"], lam=cfg["lam"], prior_temp=cfg["prior_temp"], prior_eps=cfg["prior_eps"])
+            for j in eval_jobs(cfg)]
     res = list(pool.imap_unordered(_eval, jobs, chunksize=4))
     out = {}
     for opp in OPPONENTS:
@@ -143,6 +147,8 @@ def main():
     ap.add_argument("--continue", dest="cont", action="store_true")
     ap.add_argument("--set", nargs="*", default=[], help="config overrides key=value")
     ap.add_argument("--warm_from", default=None, help="reuse another run's warm start (net_0, baseline, row 0)")
+    ap.add_argument("--init_from", default=None, help="start from this net (e.g. runs/r2/net_357.npy): iteration 0 = "
+                                                     "that net evaluated with this run's search settings")
     args = ap.parse_args()
 
     from az import net
@@ -171,6 +177,24 @@ def main():
         base_eval = json.load(open(os.path.join(d, "baseline.json")))
         best = float(ck["best"])
         log.event("run_resume", iter=it)
+    elif args.init_from:
+        log.event("run_start", config=cfg, init_from=args.init_from)
+        params = np.load(args.init_from)
+        p0 = os.path.join(d, "net_0.npy")
+        np.save(p0, params)
+        base_eval = json.load(open(os.path.join(os.path.dirname(args.init_from), "baseline.json")))
+        json.dump(base_eval, open(os.path.join(d, "baseline.json"), "w"), indent=1)
+        opt = net.Adam(len(params), cfg["lr"])
+        ev_s = run_eval(pool, cfg, "search", p0)
+        ev_n = run_eval(pool, cfg, "net", p0)
+        log.event("init_done", init_from=args.init_from, search=fmt_eval(ev_s), net=fmt_eval(ev_n))
+        best = ev_s["GA base"]
+        with open(os.path.join(os.path.dirname(args.init_from), "stats.csv")) as f:
+            last = list(csv.DictReader(f))[-1]           # the source's training losses, so the columns match
+        m = {k: float(last[k]) for k in ("policy_ce", "policy_kl", "value_mse", "policy_acc")}
+        log.row(make_row(0, t0, 0, 0, m, {}, ev_s, ev_n, base_eval, {}, cfg))
+        it = 1
+        save_ckpt(d, params, opt, 0, best)
     elif args.warm_from:
         log.event("run_start", config=cfg, warm_from=args.warm_from)
         src = args.warm_from
@@ -278,7 +302,9 @@ def main():
             subprocess.run([sys.executable, "experiments/goal_check.py", p, "--name", f"{args.run}_iter{it}",
                             "--label", f"{args.run} iteration {it} + search",
                             "--note", f"{cfg['eval_sims']} sims, leaf {cfg['lam']} net + {1 - cfg['lam']:g} rollout",
-                            "--sims", str(cfg["eval_sims"]), "--lam", str(cfg["lam"]), "--nh", str(nh)], check=False)
+                            "--sims", str(cfg["eval_sims"]), "--lam", str(cfg["lam"]), "--nh", str(nh),
+                            "--cpuct", str(cfg["cpuct"]), "--ptemp", str(cfg["prior_temp"]),
+                            "--peps", str(cfg["prior_eps"])], check=False)
         it += 1
 
 

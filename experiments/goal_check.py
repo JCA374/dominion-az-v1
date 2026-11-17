@@ -4,6 +4,7 @@ benchmark bot. Writes results/goal_<name>.json for the site's goal table.
 
     python experiments/goal_check.py runs/r1/net_12.npy --name iter12
     python experiments/goal_check.py ga --name ga_base --baseline     # the GA base itself
+    python experiments/goal_check.py runs/r2/net_357.npy --name r2_net --sims 0   # the net alone, no search
 """
 from __future__ import annotations
 
@@ -30,10 +31,11 @@ def _init(path):
 
 def job(j):
     from az.base import base_genome
-    from az.core import GA, SEARCH, Seat, bot, outcome, play
+    from az.core import GA, NET, SEARCH, Seat, bot, lib, outcome, play
+    lib.az_set_prior(j["ptemp"], j["peps"])
     k = j["kingdom"]
     g = base_genome(k)["ints"]
-    me = Seat(GA, g) if P is None else Seat(SEARCH, g, P, sims=j["sims"])
+    me = Seat(GA, g) if P is None else Seat(NET, g, P) if j["sims"] == 0 else Seat(SEARCH, g, P, sims=j["sims"])
     opp = Seat(GA, g if j["opp"] == "GA base" else bot(j["opp"], k))
     seats = [me, opp] if j["seat"] == 0 else [opp, me]
     r = play(seats, k, j["seed"], search_seed=j["seed"] ^ 0x5EED, nh=j["nh"], cpuct=j["cpuct"], lam=j["lam"])
@@ -58,6 +60,8 @@ def main():
     ap.add_argument("--lam", type=float, default=0.5)
     ap.add_argument("--nh", type=int, default=128)
     ap.add_argument("--cpuct", type=float, default=1.5)
+    ap.add_argument("--ptemp", type=float, default=1.0, help="search prior temperature")
+    ap.add_argument("--peps", type=float, default=0.0, help="search prior: share of uniform")
     ap.add_argument("--kingdoms", type=int, default=500)
     ap.add_argument("--bot_kingdoms", type=int, default=100)
     args = ap.parse_args()
@@ -72,7 +76,7 @@ def main():
             k, s = kingdom_for_bot(rng, b), rng.getrandbits(32)
             jobs += [{"kingdom": k, "seed": s, "seat": seat, "opp": b} for seat in (0, 1)]
     for j in jobs:
-        j.update(sims=args.sims, nh=args.nh, cpuct=args.cpuct, lam=args.lam)
+        j.update(sims=args.sims, nh=args.nh, cpuct=args.cpuct, lam=args.lam, ptemp=args.ptemp, peps=args.peps)
     t = time.time()
     with mp.Pool(max(1, os.cpu_count() - 1), _init, (args.net,)) as pool:
         res = pool.map(job, jobs, chunksize=4)
@@ -86,7 +90,8 @@ def main():
            "big_money": round(float(np.mean(by["Big Money"])), 4),
            "smithy_bm": round(float(np.mean(by["Smithy-BM"])), 4),
            "witch_bm": round(float(np.mean(by["Witch-BM"])), 4),
-           "sims": None if args.net == "ga" else args.sims, "lam": args.lam, "secs": round(time.time() - t)}
+           "sims": None if args.net == "ga" else args.sims, "lam": args.lam, "cpuct": args.cpuct,
+           "ptemp": args.ptemp, "peps": args.peps, "secs": round(time.time() - t)}
     os.makedirs("results", exist_ok=True)
     path = f"results/{'baseline' if args.baseline else 'goal'}_{args.name}.json"
     json.dump(out, open(path, "w"), indent=1)

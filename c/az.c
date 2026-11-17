@@ -93,20 +93,31 @@ void az_features(const de_game *g, int me, float *x) {
 
 /* priors over every card still in the supply (cost ignored: affordability differs between
  * determinizations; selection renormalises over the legal ones) */
+/* Search priors = softmax(logits / g_prior_temp) mixed with g_prior_eps of uniform. A sharp net (the
+ * ExIt target makes it near one-hot) leaves PUCT no reason to try other buys; a softer prior lets the
+ * search disagree with the net. Defaults (1, 0) = the plain softmax. */
+static float g_prior_temp = 1, g_prior_eps = 0;
+void az_set_prior(float temp, float eps) { g_prior_temp = temp > 0 ? temp : 1; g_prior_eps = eps; }
+
 static float eval_priors(const az_net *net, const de_game *g, int me, float *prior) {
     float x[AZ_NF], lg[AZ_NA], mx = -1e30f, sum = 0;
+    int nok = 0;
     az_features(g, me, x);
     float v = net_eval(net, x, lg);
     for (int a = 0; a < AZ_NA; a++) {
         int ok = a == AZ_PASS || g->supply[a] > 0;
         if (ok && lg[a] > mx) mx = lg[a];
+        nok += ok;
     }
     for (int a = 0; a < AZ_NA; a++) {
         int ok = a == AZ_PASS || g->supply[a] > 0;
-        prior[a] = ok ? expf(lg[a] - mx) : 0;
+        prior[a] = ok ? expf((lg[a] - mx) / g_prior_temp) : 0;
         sum += prior[a];
     }
-    for (int a = 0; a < AZ_NA; a++) prior[a] /= sum;
+    for (int a = 0; a < AZ_NA; a++) {
+        int ok = a == AZ_PASS || g->supply[a] > 0;
+        prior[a] = (1 - g_prior_eps) * prior[a] / sum + (ok ? g_prior_eps / nok : 0);
+    }
     return v;
 }
 
@@ -390,7 +401,7 @@ static int az_decide(void *ctx, const de_game *g, int kind, int me, int subject,
         a = AZ_PASS;
         for (int i = 0; i < AZ_NA; i++) if (ok[i] && lg[i] > best) { best = lg[i]; a = i; }
         pi[a] = 1;
-        if (ag->mode == AZ_SEARCH && ag->record) record(g, me, ok, pi, q);
+        if (ag->record) record(g, me, ok, pi, q);
     } else {
         int visits[AZ_NA];
         q = search(&ag->net, ag->genome, g, me, opts, n, may_pass, ag->sims, ag->cpuct,

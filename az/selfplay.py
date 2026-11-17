@@ -33,6 +33,7 @@ def selfplay_game(job: dict) -> dict:
     """Search vs search (both recorded), or search vs the GA base genome (search seat recorded)."""
     k, seed, cfg, params = job["kingdom"], job["seed"], job["cfg"], job["params"]
     lib.az_set_target(50, cfg["c_scale"], 0, cfg["target"])
+    lib.az_set_prior(cfg.get("prior_temp", 1.0), cfg.get("prior_eps", 0.0))
     g = base_genome(k)["ints"]
     me = Seat(SEARCH, g, params, sims=cfg["sims"], noise=bool(cfg["noise"]), temp_turns=cfg["temp_turns"],
               record=True)
@@ -47,6 +48,9 @@ def selfplay_game(job: dict) -> dict:
     r = play(seats, k, seed, search_seed=seed * 7919 + 1, nh=cfg["nh"], cpuct=cfg["cpuct"],
              lam=cfg["lam"])
     out = _records(r)
+    vq = cfg.get("vq", 0.0)                 # value target = (1 - vq) * result + vq * the search's root value
+    if vq:
+        out["Z"] = ((1 - vq) * out["Z"] + vq * out["Q"]).astype(np.float32)
     out["result"] = outcome(r, job["seat"])
     out["turns"] = max(r["turns"])
     out["vs_ga"] = bool(job.get("vs_ga")) and not job.get("vs_bot")
@@ -63,6 +67,7 @@ def eval_game(job: dict) -> dict:
     elif a == "net":
         me = Seat(NET, g, job["params"])
     else:
+        lib.az_set_prior(job.get("prior_temp", 1.0), job.get("prior_eps", 0.0))
         me = Seat(SEARCH, g, job["params"], sims=job["sims"])
     opp = Seat(GA, g if job["opponent"] == "GA base" else bot(job["opponent"], k))
     seats = [me, opp] if job["seat"] == 0 else [opp, me]

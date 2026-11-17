@@ -56,6 +56,7 @@ lib.az_play.argtypes = [_I, _F, _F, ctypes.c_int, _I, _I, _I, _I, _I, _I, ctypes
 
 lib.az_set_trace.argtypes = [_F, ctypes.c_int]
 lib.az_set_target.argtypes = [ctypes.c_float, ctypes.c_float, ctypes.c_int, ctypes.c_int]
+lib.az_set_prior.argtypes = [ctypes.c_float, ctypes.c_float]      # search prior temperature, uniform mix
 TRACE_W = lib.az_trace_width()
 
 GA, NET, SEARCH = 0, 1, 2
