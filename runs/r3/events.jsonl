@@ -2,3 +2,4 @@
 {"t": "2026-11-17T10:47:40", "kind": "init_done", "init_from": "runs/study/net_357_vq.npy", "search": "Big M=0.860 Smith=0.755 Witch=0.670 GA ba=0.665 bots=0.762", "net": "Big M=0.865 Smith=0.745 Witch=0.665 GA ba=0.647 bots=0.758"}
 {"t": "2026-11-17T10:53:29", "kind": "goal_best", "iter": 1, "check": {"score": 0.6675, "n": 200}, "champion": "runs/r3/net_1.npy", "search": "Big M=0.863 Smith=0.745 Witch=0.703 GA ba=0.667 bots=0.770"}
 {"t": "2026-11-17T10:58:04", "kind": "goal_best", "iter": 2, "check": {"score": 0.67, "n": 200}, "champion": "runs/r3/net_2.npy", "search": "Big M=0.855 Smith=0.745 Witch=0.667 GA ba=0.670 bots=0.756"}
+{"t": "2026-11-17T11:53:56", "kind": "goal_best", "iter": 15, "check": {"score": 0.6725, "n": 200}, "champion": "runs/r3/net_15.npy", "search": "Big M=0.835 Smith=0.735 Witch=0.667 GA ba=0.672 bots=0.746"}
