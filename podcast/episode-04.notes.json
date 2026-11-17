@@ -1,0 +1,4 @@
+["Run r3 (honest value head, half-rollout leaves): 68.0% / 67.4% at iterations 10 / 20",
+ "Run r4 (value-only leaves, the AlphaZero setting): 66.8% / 67.7% / 66.6% at iterations 10 / 20 / 30; bots 80% in its evaluation, not confirmed on fresh games (75.6% vs 75.3%)",
+ "~20 variants since the plateau; none above ~70%. Best agent: r2's net, 400 simulations, half-rollout leaves (70.2%)",
+ "Lessons: keep a held-out number; agreement between search and net means self-play has stopped teaching; trust the judge before exploring more"]
