@@ -1,0 +1,22 @@
+{
+ "t": "2026-11-17 10:51:34",
+ "label": "net 357 + new value head (Q target), leaf \u00be value \u00bc rollout",
+ "note": "",
+ "policy": "runs/study/net_357_vq.npy",
+ "n": 1000,
+ "score": 0.696,
+ "ci": [
+  0.6668,
+  0.7237
+ ],
+ "big_money": 0.84,
+ "smithy_bm": 0.7525,
+ "witch_bm": 0.665,
+ "sims": 400,
+ "lam": 0.75,
+ "cpuct": 1.5,
+ "ptemp": 1.0,
+ "peps": 0.0,
+ "rollout_net": 0,
+ "secs": 410
+}

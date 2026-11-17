@@ -131,7 +131,7 @@ the search trusts its noise: with the net's value alone, more simulations made i
 at 1,600 simulations). Finishing each leaf's game with the GA genome is unbiased but noisy; the mix of the two won
 clearly (58% at 400 simulations, 60% at 1,600). This is AlphaGo's original recipe (value net + fast rollouts). Games
 in this engine take 0.2 ms, so rollouts are affordable. As the value net improves, the mix can move towards the net.
-The measurements are in the goal table on the <a href="index.html">Log</a>.</p>
+The measurements are in the goal table on the <a href="training.html">Training</a> tab.</p>
 
 <h2>Why the target is the chosen buy, not the visit shares</h2>
 <p>In run r1 the net learned the search's visit shares, as in AlphaZero. In Dominion the values of the candidate buys
@@ -141,6 +141,29 @@ own prior and by the Dirichlet noise added at the root for exploration. The net 
 measurably beats the GA (58%), so r2 teaches exactly that, without root noise. A third option, Gumbel AlphaZero's
 "completed Q" target, was tried in between: it is noise-free, but with the warm net's very sharp prior it hardly moves
 off the prior, so the net would learn nothing new.</p>
+
+<h2>Why it stopped improving, and what the value head was really doing</h2>
+<p>Run r2 reached 69–70% on the goal checks by iteration 100 and stayed there for 250 more iterations. Three
+measurements on net 357 (1,000 fresh games each, ±3%) explain it:</p>
+<ol>
+  <li><b>The search hardly adds anything any more.</b> Net alone 66.7%; search with 100 / 400 / 1,600 simulations
+    67.3% / 70.2% / 69.5%. At the warm start the search added 7 points. The net predicts the searched buy 98% of the
+    time, so self-play mostly teaches it what it already does.</li>
+  <li><b>Exploring more makes it worse.</b> The net's prior is nearly one-hot (see "What it wants to buy" below), so
+    the search rarely looks at other buys. Softening the prior inside the search: temperature 2 → 68.6%,
+    temperature 4 → 69.1%, a quarter of the prior spread evenly → 48.0%. When the search tries every buy and its
+    leaf values are noisy, it finds a bad buy that looks good by luck.</li>
+  <li><b>The value head had memorised the training games.</b> Its error against the final result on fresh games:
+    0.68 (warm start), 0.92 (iteration 100), 1.17 (iteration 357), worse than always predicting a draw (0.97). The
+    training log showed 0.19, measured on the replay buffer, where each decision is seen ~10 times and the ~35
+    decisions of one game share one result.</li>
+</ol>
+<p><b>The fix</b> (offline study on 3,000 games, <code>experiments/value_study.py</code>): a fresh value head on the
+same trunk, trained on the search's own root value Q of each decision instead of the game result. Held-out error 0.70
+(the search's Q itself: 0.66). Run r3 trains this way from the start (<code>vq = 1</code>) and logs
+<code>value_mse_fresh</code>, the error on each iteration's new games before training on them. With the new head the
+search scores 70.3% (half value, half rollout) and 69.7% (value only, up from 68.1%): a better judge, but so far not a
+stronger player.</p>
 
 <h2>What the GA genome still does</h2>
 <p>Every decision that is not a buy: which action to play next, Chapel/Sentry trashing, Workshop/Remodel/Artisan
