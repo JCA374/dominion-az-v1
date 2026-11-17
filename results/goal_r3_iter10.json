@@ -1,0 +1,22 @@
+{
+ "t": "2026-11-17 11:34:32",
+ "label": "r3 iteration 10 + search",
+ "note": "400 sims, leaf 0.5 net + 0.5 rollout",
+ "policy": "runs/r3/net_10.npy",
+ "n": 1000,
+ "score": 0.68,
+ "ci": [
+  0.6504,
+  0.7082
+ ],
+ "big_money": 0.8275,
+ "smithy_bm": 0.7825,
+ "witch_bm": 0.68,
+ "sims": 400,
+ "lam": 0.5,
+ "cpuct": 1.5,
+ "ptemp": 1.0,
+ "peps": 0.0,
+ "rollout_net": 0,
+ "secs": 154
+}
