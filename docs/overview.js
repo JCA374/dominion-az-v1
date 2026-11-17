@@ -24,7 +24,7 @@ document.addEventListener('status', (ev) => {
     };
     tick(); setInterval(tick, 30000);
   }
-  const cards = [['Run', s.run || '–', s.alive ? 'training now' : 'stopped'], ['Stage', s.stage || '–', s.stages_text || ''],
+  const cards = [['Run', s.run || '–', s.alive ? 'training now' : 'stopped'], ...(s.stage ? [['Stage', s.stage, s.stages_text || '']] : []),
     ['Best verified', s.verified_text || '–', s.verified_sub || 'goal check on unseen episodes'],
     ['Best check', s.best_text || '–', 'best of many: flatters'],
     ['Goal', s.goal_text || '–', C.goal_text || '']];

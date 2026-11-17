@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lessons</title>
-<link rel="stylesheet" href="style.css?v=3f2f833f">
+<link rel="stylesheet" href="style.css?v=087dc4db">
 <style>.box li { margin: 10px 0; }</style>
 </head>
 <body>
@@ -12,6 +12,21 @@
 <h1>Lessons</h1>
 <p class="lede">What this project taught so far, newest first. Each lesson comes with the measurement behind it.</p>
 <div class="box"><h3>From this project</h3><ul id="new">
+  <li><b>A training loss can improve while the model gets worse.</b> r2's log showed the value error falling from 0.65
+    to 0.19. On 600 fresh games the same value head scored 0.68 (warm start), 0.92 (iteration 100) and 1.17
+    (iteration 357), worse than always predicting a draw (0.97). Each buy decision is trained on ~10 times, and the
+    ~35 decisions of a game share one result, so the head memorised the games. Always keep one number measured on data
+    the model never trained on; the trainer now logs <code>value_mse_fresh</code>, the error on each iteration's new
+    games before training on them.</li>
+  <li><b>When the net agrees with the search, self-play stops teaching.</b> From iteration ~100 to 357 the goal checks
+    stayed at 69–70% while the net predicted the searched buy 97–98% of the time. The search then adds little: net 357
+    alone 66.7%, with 100 / 400 / 1,600 simulations 67.3% / 70.2% / 69.5% (1,000 games each, ±3%). At the warm
+    start the search added 7 points over the net.</li>
+  <li><b>More exploration needs a trustworthy judge.</b> Softening the net's prior inside the search (temperature 2,
+    4) changed nothing (68.6%, 69.1%); mixing in 25% uniform dropped the score to 48%. If the search is told to try
+    every buy and its leaf values are noisy, some bad buy looks best by luck and the search picks it, the same
+    winner's curse as picking the best of many evaluations. The ceiling is the leaf evaluation, not the
+    exploration.</li>
   <li><b>Visit shares are a bad policy target when the options are nearly equal.</b> Run r1 trained on AlphaZero's
     standard target. Dominion buys are usually within a few percent of each other, so the visits mostly echo the net's
     prior plus the root's Dirichlet noise. One iteration later the net alone had dropped from 51.7% to 24.3% against the
@@ -32,7 +47,7 @@
     the evolved genome, not a re-implementation.</li>
 </ul></div>
 </main>
-<script src="site.js?v=dc12a212"></script>
+<script src="site.js?v=11bfb7bf"></script>
 <script src="common.js?v=958183f8"></script>
 <script src="project.js?v=3ef4b063"></script>
 </body>

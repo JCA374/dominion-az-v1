@@ -12,7 +12,7 @@ async function main() {
   if (main) {
     const l = main.last || {};
     const card = (c) => { let v = l[c.key]; if (c.fmt === 'pct') v = pct(+v); if (c.fmt === 'M') v = fmtM(v); return [c.label, v ?? '–', c.sub || '']; };
-    $('cards').innerHTML = [['Run', main.run, main.alive ? 'training now' : 'stopped'], ['Stage', l.stage || '–', `${main.passed.length} of ${main.n_stages || '?'} stage(s) passed`],
+    $('cards').innerHTML = [['Run', main.run, main.alive ? 'training now' : 'stopped'], ...(main.n_stages || l.stage ? [['Stage', l.stage || '–', `${main.passed.length} of ${main.n_stages || '?'} stage(s) passed`]] : []),
       ...(C.cards || []).map(card), ['Best check', main.best_goal ? pct(main.best_goal[metric]) : '–', 'best of many: flatters']]
       .map(([k, v, s]) => `<div class="card"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div><div class="s">${esc(s)}</div></div>`).join('');
     const rows = (stats || {})[main.run] || [];
@@ -29,8 +29,8 @@ async function main() {
 function goalTable(status, C, metric, target) {
   const rows = [];
   for (const [k, r] of Object.entries(status.goals || {})) rows.push([r.label || k, r, r.note || 'goal check']);
-  for (const [k, r] of Object.entries(status.baselines || {})) rows.push([(C.names || {})[k] || k, r, 'baseline']);
-  for (const [k, r] of Object.entries(status.bakeoff || {})) rows.push([(C.names || {})[k] || k, r, 'bake-off']);
+  for (const [k, r] of Object.entries(status.baselines || {})) rows.push([(C.names || {})[k] || r.label || k, r, 'baseline']);
+  for (const [k, r] of Object.entries(status.bakeoff || {})) rows.push([(C.names || {})[k] || r.label || k, r, 'bake-off']);
   rows.sort((a, b) => (b[1][metric] ?? 0) - (a[1][metric] ?? 0));
   const extra = (C.goal || {}).columns || [];
   $('goaltable').innerHTML = `<tr><th>Agent</th><th>${esc((C.goal || {}).label || metric)}</th><th>95% interval</th>${extra.map((c) => `<th>${esc(c[1])}</th>`).join('')}<th>n</th></tr>` +

@@ -1,0 +1,22 @@
+{
+ "t": "2026-11-17 10:05:04",
+ "label": "r2 search, prior 25% uniform",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.4795,
+ "ci": [
+  0.4487,
+  0.5105
+ ],
+ "big_money": 0.7525,
+ "smithy_bm": 0.575,
+ "witch_bm": 0.485,
+ "sims": 400,
+ "lam": 0.5,
+ "cpuct": 1.5,
+ "ptemp": 1.0,
+ "peps": 0.25,
+ "rollout_net": 0,
+ "secs": 196
+}
