@@ -1,0 +1,32 @@
+{
+ "net": "runs/r2/net_357.npy",
+ "train_decisions": 84558,
+ "holdout_decisions": 21077,
+ "zero_mse_z": 0.9705,
+ "q_as_prediction_mse_z": 0.664,
+ "untrained": {
+  "value_mse_z": 1.2402,
+  "value_mse_q": 0.4379,
+  "policy_acc": 0.98
+ },
+ "variants": {
+  "as r2 (z, w1, l2 1e-4, 10 passes)": {
+   "value_mse_z": 1.334,
+   "value_mse_q": 0.6602,
+   "policy_acc": 0.9759,
+   "train_value_mse": 0.0588
+  },
+  "2 passes": {
+   "value_mse_z": 1.1686,
+   "value_mse_q": 0.4945,
+   "policy_acc": 0.9765,
+   "train_value_mse": 0.3152
+  },
+  "1 pass": {
+   "value_mse_z": 1.1062,
+   "value_mse_q": 0.4379,
+   "policy_acc": 0.9777,
+   "train_value_mse": 0.6493
+  }
+ }
+}

@@ -1,0 +1,22 @@
+{
+ "t": "2026-11-17 10:21:31",
+ "label": "r2 search 100 sims, rollouts buy with the net",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.6935,
+ "ci": [
+  0.6642,
+  0.7213
+ ],
+ "big_money": 0.8425,
+ "smithy_bm": 0.7675,
+ "witch_bm": 0.655,
+ "sims": 100,
+ "lam": 0.5,
+ "cpuct": 1.5,
+ "ptemp": 1.0,
+ "peps": 0.0,
+ "rollout_net": 1,
+ "secs": 790
+}
