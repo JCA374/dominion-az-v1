@@ -27,6 +27,78 @@
    "value_mse_q": 0.4379,
    "policy_acc": 0.9777,
    "train_value_mse": 0.6493
+  },
+  "value weight 0.25, 10 passes": {
+   "value_mse_z": 1.2358,
+   "value_mse_q": 0.5778,
+   "policy_acc": 0.9751,
+   "train_value_mse": 0.0501
+  },
+  "l2 1e-3, 10 passes": {
+   "value_mse_z": 1.1438,
+   "value_mse_q": 0.4835,
+   "policy_acc": 0.9666,
+   "train_value_mse": 0.0634
+  },
+  "target (z+Q)/2, 10 passes": {
+   "value_mse_z": 1.1239,
+   "value_mse_q": 0.4533,
+   "policy_acc": 0.976,
+   "train_value_mse": 0.0319
+  },
+  "target Q, 10 passes": {
+   "value_mse_z": 0.9729,
+   "value_mse_q": 0.3021,
+   "policy_acc": 0.9761,
+   "train_value_mse": 0.0528
+  },
+  "target (z+Q)/2, 2 passes": {
+   "value_mse_z": 1.0969,
+   "value_mse_q": 0.4172,
+   "policy_acc": 0.9774,
+   "train_value_mse": 0.1687
+  },
+  "357, value head reset, target Q, 2 passes": {
+   "value_mse_z": 0.7047,
+   "value_mse_q": 0.0994,
+   "policy_acc": 0.9758,
+   "train_value_mse": 0.0869
+  },
+  "357, value head reset, target z, 2 passes": {
+   "value_mse_z": 0.8099,
+   "value_mse_q": 0.1987,
+   "policy_acc": 0.9745,
+   "train_value_mse": 0.5445
+  },
+  "357, value head reset, target Q, 1 pass": {
+   "value_mse_z": 0.7279,
+   "value_mse_q": 0.1202,
+   "policy_acc": 0.9755,
+   "train_value_mse": 0.1626
+  },
+  "warm net 0, target Q, 2 passes": {
+   "value_mse_z": 0.6883,
+   "value_mse_q": 0.1002,
+   "policy_acc": 0.9362,
+   "train_value_mse": 0.0966
+  },
+  "warm net 0, target z, 2 passes": {
+   "value_mse_z": 0.6985,
+   "value_mse_q": 0.1211,
+   "policy_acc": 0.9352,
+   "train_value_mse": 0.6426
+  },
+  "357, target Q, 1 pass": {
+   "value_mse_z": 1.0374,
+   "value_mse_q": 0.345,
+   "policy_acc": 0.9777,
+   "train_value_mse": 0.2623
+  },
+  "357, target Q, 2 passes": {
+   "value_mse_z": 1.0241,
+   "value_mse_q": 0.3378,
+   "policy_acc": 0.9777,
+   "train_value_mse": 0.1592
   }
  }
 }

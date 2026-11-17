@@ -36,6 +36,15 @@ def game(job):
     return {k: g[k] for k in ("X", "PI", "LEGAL", "Z", "Q", "TURN")}
 
 
+VARIANTS2 = {  # round 2: name: (start, reset the value head, vq, value weight, l2, epochs)
+    "357, value head reset, target Q, 2 passes": ("357", True, 1.0, 1.0, 1e-4, 2),
+    "357, value head reset, target z, 2 passes": ("357", True, 0.0, 1.0, 1e-4, 2),
+    "357, value head reset, target Q, 1 pass": ("357", True, 1.0, 1.0, 1e-4, 1),
+    "warm net 0, target Q, 2 passes": ("warm", False, 1.0, 1.0, 1e-4, 2),
+    "warm net 0, target z, 2 passes": ("warm", False, 0.0, 1.0, 1e-4, 2),
+    "357, target Q, 1 pass": ("357", False, 1.0, 1.0, 1e-4, 1),
+    "357, target Q, 2 passes": ("357", False, 1.0, 1.0, 1e-4, 2),
+}
 VARIANTS = {  # name: (value target mix vq, value weight, l2, epochs)
     "as r2 (z, w1, l2 1e-4, 10 passes)": (0.0, 1.0, 1e-4, 10),
     "2 passes": (0.0, 1.0, 1e-4, 2),
@@ -52,6 +61,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("net")
     ap.add_argument("--games", type=int, default=3000)
+    ap.add_argument("--round", type=int, default=1)
     args = ap.parse_args()
     from az import net
     from az.base import BOTS, kingdom_for_bot, random_kingdom
@@ -94,8 +104,16 @@ def main():
            "q_as_prediction_mse_z": round(float(((ho["Q"] - ho["Z"]) ** 2).mean()), 4),
            "untrained": measure(p0), "variants": {}}
     print(json.dumps({k: out[k] for k in ("zero_mse_z", "q_as_prediction_mse_z", "untrained")}), flush=True)
-    for name, (vq, vw, l2, ep) in VARIANTS.items():
-        p = p0.copy()
+    variants = {k: ("357", False) + v for k, v in VARIANTS.items()} if args.round == 1 else VARIANTS2
+    if args.round == 2:
+        out = json.load(open("results/value_study.json"))
+        out.setdefault("variants", {})
+    for name, (start, reset, vq, vw, l2, ep) in variants.items():
+        p = (p0 if start == "357" else np.load("runs/warm/net_0.npy")).copy()
+        if reset:                                   # a new value head on the trained trunk
+            w = net.unpack(p, 128)
+            w["Wv"][:] = np.random.default_rng(0).normal(0, 0.01, w["Wv"].shape)
+            w["bv"][:] = 0
         opt = net.Adam(len(p), 1e-3)
         data = {k: tr[k] for k in ("X", "PI", "LEGAL")}
         data["Z"] = ((1 - vq) * tr["Z"] + vq * tr["Q"]).astype(np.float32)

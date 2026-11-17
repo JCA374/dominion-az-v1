@@ -20,7 +20,7 @@ from az import core
 from az.base import base_genome
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-RUN = "r2"
+RUN = "r3"
 EVERY = 10                     # the Play tab's "newest" model moves every EVERY iterations (clips are committed)
 W, H = 800, 450
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"

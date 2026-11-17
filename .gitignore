@@ -9,3 +9,4 @@ runs/
 voice/*/audio/
 voice/*/*.wav
 podcast/publish_*.log
+.voice-venv/
