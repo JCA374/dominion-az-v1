@@ -12,6 +12,20 @@
 <h1>Lessons</h1>
 <p class="lede">What this project taught so far, newest first. Each lesson comes with the measurement behind it.</p>
 <div class="box"><h3>From this project</h3><ul id="new">
+  <li><b>An honest judge is necessary, not sufficient.</b> A fresh value head trained on the search's root value cut
+    the held-out error from 1.24 to 0.70, but training with it did not lift the plateau: r3 (half-rollout leaves)
+    68.0% / 67.4% at iterations 10 / 20; r4 (value-only leaves, AlphaZero's setting) 66.8% / 67.7% / 66.6% at
+    10 / 20 / 30. With half of every leaf value coming from a GA rollout, the search learns to buy well for a game the
+    GA finishes, which is a ceiling that training can't move. Value-only leaves remove that ceiling, but 30 iterations
+    showed no gain.</li>
+  <li><b>Know when to stop.</b> About 20 variants after the plateau began (simulations, cpuct, prior softening,
+    net-buy rollouts, value targets, leaf mixes) all landed between 66% and 70% on the same 1,000 fresh games, ±3%.
+    When every lever moves the result by less than the measurement's noise, more runs of the same method are not
+    progress. The next step would be a different method, such as searching the action decisions too, not more of
+    this one.</li>
+  <li><b>Read a fixed evaluation set with care.</b> r4's per-iteration evaluation against the three bots rose to 80%
+    (r2: 77%), but the same bots on the goal checks' fresh kingdoms gave 75.6% vs 75.3%. The evaluation reuses the
+    same 600 bot games every iteration, so a gain there can be a fit to those kingdoms.</li>
   <li><b>A training loss can improve while the model gets worse.</b> r2's log showed the value error falling from 0.65
     to 0.19. On 600 fresh games the same value head scored 0.68 (warm start), 0.92 (iteration 100) and 1.17
     (iteration 357), worse than always predicting a draw (0.97). Each buy decision is trained on ~10 times, and the

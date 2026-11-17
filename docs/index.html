@@ -14,7 +14,10 @@
 it runs an <b>information-set Monte Carlo tree search</b> that deals the hidden cards anew in each of its 400 simulations,
 and a small neural network guides the search and learns from it in self-play. <b>The goal:</b> win 65% of 1,000 fresh
 games head to head against the evolved GA genome it started from, with the same play of action cards on both sides so
-only the buys differ. Passed at iteration 10 (63% → 69%); the run now asks how far past it this method can go.</p>
+only the buys differ. <b>Passed</b> at iteration 20 (65%) and held at 69–70% from iteration 100. Twenty variants
+since then (more search, softer priors, an honest value head, AlphaZero's value-only leaves) all stayed at 66–70%:
+about 70% is this method's ceiling here. Training has stopped; the <a href="lessons.html">Lessons</a>,
+<a href="study.html">Study</a> and <a href="podcast/">Podcast</a> tabs tell the story.</p>
   <p class="countdown" id="countdown"></p>
 </header>
 
