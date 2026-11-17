@@ -1,0 +1,18 @@
+{
+ "t": "2026-11-17 09:29:12",
+ "label": "r2 search, leaf lam=0",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.699,
+ "ci": [
+  0.6699,
+  0.7266
+ ],
+ "big_money": 0.845,
+ "smithy_bm": 0.7425,
+ "witch_bm": 0.68,
+ "sims": 400,
+ "lam": 0.0,
+ "secs": 178
+}

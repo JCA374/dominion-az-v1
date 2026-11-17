@@ -13,6 +13,7 @@ import os
 import subprocess
 
 import numpy as np
+
 from PIL import Image, ImageDraw, ImageFont
 
 from az import core
@@ -267,3 +268,179 @@ def extra(data_dir):
     for p in sorted(glob.glob(os.path.join(ROOT, "results", "*.json"))):
         out[os.path.basename(p)[:-5]] = json.load(open(p))
     json.dump(out, open(os.path.join(data_dir, "results.json"), "w"), separators=(",", ":"))
+
+
+# ── The model tab: pictures of the newest net (helpers from the ml-project-site template) ─────
+
+def cached(out_png, source_path):
+    """True when out_png is newer than the model file it is drawn from (so the figure need not be redrawn)."""
+    return os.path.exists(out_png) and os.path.exists(source_path) and os.path.getmtime(out_png) >= os.path.getmtime(source_path)
+
+
+def _plt():
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    return plt
+
+
+def fig_arch(layers, out_png, title='Architecture'):
+    """layers: [("input", 8), ("dense tanh", 64), ("dense tanh", 64), ("action logits", 4)] -> a box diagram with sizes."""
+    plt = _plt()
+    fig, ax = plt.subplots(figsize=(7, 1.2 + 0.7 * len(layers)))
+    ax.axis('off')
+    for i, (name, n) in enumerate(layers):
+        y = len(layers) - 1 - i
+        w = 1 + 4 * (n / max(m for _, m in layers)) ** 0.5
+        ax.add_patch(plt.Rectangle((3 - w / 2, y - 0.3), w, 0.6, fc='#dbe4ff', ec='#3b5bdb'))
+        ax.text(3, y, f'{name}  ·  {n}', ha='center', va='center', fontsize=10)
+        if i:
+            ax.annotate('', (3, y + 0.32), (3, y + 0.68), arrowprops=dict(arrowstyle='->', color='#6b6b70'))
+    ax.set_xlim(0, 6); ax.set_ylim(-0.6, len(layers) - 0.4)
+    ax.set_title(title)
+    fig.tight_layout(); fig.savefig(out_png, dpi=110); plt.close(fig)
+
+
+def fig_weight_hist(named_arrays, out_png, title='Weights per layer'):
+    """named_arrays: [("layer 1", ndarray), ...] -> one histogram per layer (shared x range)."""
+    plt = _plt()
+    import numpy as np
+    n = len(named_arrays)
+    fig, axes = plt.subplots(1, n, figsize=(3 * n, 2.6), sharey=False)
+    axes = np.atleast_1d(axes)
+    lim = max(float(np.abs(a).max()) for _, a in named_arrays) or 1
+    for ax, (name, a) in zip(axes, named_arrays):
+        a = np.asarray(a).ravel()
+        ax.hist(a, bins=40, range=(-lim, lim), color='#3b5bdb')
+        ax.set_title(f'{name}\n{a.size} values, std {a.std():.2f}', fontsize=9)
+        ax.tick_params(labelsize=7)
+    fig.suptitle(title); fig.tight_layout(); fig.savefig(out_png, dpi=110); plt.close(fig)
+
+
+def fig_bars(labels, values, out_png, title='', ylabel='', colors=None):
+    """A bar chart: e.g. action probabilities in a fixed situation, or input sensitivity (how much the output moves when
+    each input is nudged by one standard deviation)."""
+    plt = _plt()
+    fig, ax = plt.subplots(figsize=(max(4, 0.6 * len(labels)), 3))
+    ax.bar(range(len(labels)), values, color=colors or '#3b5bdb')
+    ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=8)
+    ax.set_ylabel(ylabel); ax.set_title(title)
+    fig.tight_layout(); fig.savefig(out_png, dpi=110); plt.close(fig)
+
+
+FEAT_GROUPS = ["own", "draw pile", "opp", "supply", "in game"]
+FEAT_EXTRA = ["coins", "buys", "my turns", "opp turns", "my VP", "opp VP", "VP lead", "Provinces left",
+              "empty piles", "I go first"]
+SITUATIONS = [  # (title, test on (turn, coins, provinces left, VP lead))
+    ("Opening, $5", lambda t, c, p, l: t <= 2 and c == 5),
+    ("Opening, $4", lambda t, c, p, l: t <= 2 and c == 4),
+    ("Early, $6", lambda t, c, p, l: 3 <= t <= 8 and c in (6, 7)),
+    ("Middle, $8", lambda t, c, p, l: 6 <= t <= 14 and c >= 8 and p >= 6),
+    ("Endgame, behind, $5", lambda t, c, p, l: p <= 3 and l < 0 and c in (5, 6, 7)),
+    ("Endgame, ahead, $5", lambda t, c, p, l: p <= 3 and l > 0 and c in (5, 6, 7)),
+]
+
+
+def feature_names():
+    names = [f"{g}: {NAME[c]}" for g in FEAT_GROUPS for c in range(N)]
+    return names + FEAT_EXTRA
+
+
+def _viz_states(params):
+    """Buy decisions of the net (NET seat, recorded) in the Play tab's games, for the figures."""
+    from az.core import GA, NET, Seat, bot as botg, play
+    rows = []
+    for _, _, opp, k, _, seed in GAMES:
+        g = base_genome(k)["ints"]
+        og = g if opp == "GA base" else botg(opp, k)
+        for s in (0, 1):
+            seats = [Seat(NET, g, params, record=True), Seat(GA, og)]
+            if s:
+                seats.reverse()
+            r = play(seats, k, seed + s, nh=128)
+            rec = r["rec"]
+            for i in range(len(rec["X"])):
+                rows.append((rec["X"][i], rec["LEGAL"][i], int(rec["TURN"][i]), k))
+    return rows
+
+
+def model_viz(out_dir):
+    """Architecture, weights, the buy distribution in six named situations and input sensitivity of
+    the newest net of RUN. Redrawn only when that net changes."""
+    from az import net as azn
+    nets = _nets()
+    if not nets:
+        return []
+    src = os.path.join(ROOT, nets[-1])
+    it = nets[-1].split("_")[-1][:-4]
+    p = np.load(src).astype(np.float32)
+    nh = 128
+    w = azn.unpack(p, nh)
+    figs = [("arch", "Architecture", f"{RUN} net {it}: layer sizes read from the saved weights "
+                                      f"({p.size:,} numbers). Two heads share the trunk."),
+            ("weights", "Weights per layer", "A wide, centred histogram means the layer is used. A spike at 0 would "
+                                             "mean dead units; the policy head is wider because its logits must be "
+                                             "sharp (the net agrees with the search's buy ~98% of the time)."),
+            ("situations", "What it wants to buy", "The net's probabilities over the legal buys in six situations from "
+                                                   "the Play tab's games (net seat, no search). Look for: Gold over "
+                                                   "Province early, Province at $8 later, Duchy when the game is ending."),
+            ("sensitivity", "What it looks at", "How much the buy probabilities move (total variation, averaged over "
+                                                "all recorded buy decisions) when one input is nudged by one standard "
+                                                "deviation. The 25 most influential of the 175 inputs.")]
+    paths = {k: os.path.join(out_dir, f"{k}.png") for k, _, _ in figs}
+    if all(cached(paths[k], src) for k in paths):
+        return [{"src": f"model/{k}.png", "title": t, "caption": c} for k, t, c in figs]
+    plt = _plt()
+    fig_arch([("input: what it knows at a buy", core.NF), ("dense ReLU", nh), ("dense ReLU", nh),
+              ("policy: a card or nothing  |  value: tanh", core.NA)], paths["arch"], title=f"Net {it}")
+    fig_weight_hist([("W1", w["W1"]), ("W2", w["W2"]), ("policy Wp", w["Wp"]), ("value Wv", w["Wv"])],
+                    paths["weights"])
+    rows = _viz_states(p)
+    X = np.array([r[0] for r in rows], np.float32)
+    L = np.array([r[1] for r in rows])
+    E = core.NF - 10
+    logits, v, _ = azn.forward(p, nh, X, L)
+    prob = np.exp(logits - logits.max(1, keepdims=True)) * (L > 0)
+    prob /= prob.sum(1, keepdims=True)
+    fig, axes = plt.subplots(2, 3, figsize=(12, 6))
+    for ax, (title, test) in zip(axes.ravel(), SITUATIONS):
+        pick = None
+        for i, (x, _, turn, k) in enumerate(rows):
+            coins, prov, lead = round(x[E] * 8), round(x[E + 7] * 8), x[E + 6] * 10
+            if test(turn, coins, prov, lead):
+                pick = i
+                break
+        if pick is None:
+            ax.axis("off")
+            ax.set_title(f"{title}: not in these games", fontsize=9)
+            continue
+        pr = prob[pick]
+        top = [a for a in np.argsort(-pr)[:6] if pr[a] > 0.005]
+        labels = ["nothing" if a == core.PASS else NAME[a] for a in top]
+        ax.barh(range(len(top))[::-1], [pr[a] for a in top], color="#3b5bdb")
+        ax.set_yticks(range(len(top))[::-1])
+        ax.set_yticklabels(labels, fontsize=8)
+        ax.set_xlim(0, 1)
+        ax.tick_params(labelsize=7)
+        x = X[pick]
+        ax.set_title(f"{title}\nturn {rows[pick][2]}, value {(v[pick] + 1) / 2 * 100:.0f}% win", fontsize=9)
+    fig.tight_layout()
+    fig.savefig(paths["situations"], dpi=100)
+    plt.close(fig)
+    sd = X.std(0)
+    base = prob
+    eff = np.zeros(core.NF)
+    for j in range(core.NF):
+        if sd[j] == 0:
+            continue
+        X2 = X.copy()
+        X2[:, j] += sd[j]
+        lg, _, _ = azn.forward(p, nh, X2, L)
+        pr = np.exp(lg - lg.max(1, keepdims=True)) * (L > 0)
+        pr /= pr.sum(1, keepdims=True)
+        eff[j] = 0.5 * np.abs(pr - base).sum(1).mean()
+    names = feature_names()
+    top = np.argsort(-eff)[:25]
+    fig_bars([names[j] for j in top], [eff[j] for j in top], paths["sensitivity"],
+             title="Change in the buy distribution per +1 std of one input", ylabel="total variation")
+    return [{"src": f"model/{k}.png", "title": t, "caption": c} for k, t, c in figs]

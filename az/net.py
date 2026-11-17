@@ -109,7 +109,7 @@ class Adam:
 
 
 def train(flat, nh, data: dict, opt: Adam, epochs: int = 2, batch: int = 512, seed: int = 0,
-          value_weight: float = 1.0) -> dict:
+          value_weight: float = 1.0, l2: float = 1e-4) -> dict:
     """In place on flat. data: X, PI, LEGAL, Z. Returns the mean metrics of the last epoch."""
     rng = np.random.default_rng(seed)
     n = len(data["X"])
@@ -120,7 +120,7 @@ def train(flat, nh, data: dict, opt: Adam, epochs: int = 2, batch: int = 512, se
         for i in range(0, n, batch):
             j = order[i:i + batch]
             _, grad, m = loss_and_grad(flat, nh, data["X"][j], data["PI"][j], data["LEGAL"][j],
-                                       data["Z"][j], value_weight)
+                                       data["Z"][j], value_weight, l2)
             opt.step(flat, grad)
             acc.append(m)
         last = {k: float(np.mean([a[k] for a in acc])) for k in acc[0]}

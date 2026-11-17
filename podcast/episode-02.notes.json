@@ -1,0 +1,4 @@
+["Leaf value from the net alone: 51% → 53% → 48% vs the GA at 100 → 400 → 1,600 simulations; half net, half GA rollout: 52% → 58% → 60% (600 games each)",
+ "Run r1 trained on visit shares: the net alone fell from 51.7% to 24.3% in one iteration",
+ "Run r2 (expert iteration: learn the chosen buy, no root noise): goal checks 63.5% at iteration 10, 65.2% at 20, ~69% from 100",
+ "From iteration 7, 20% of self-play games against Big Money / Smithy-BM / Witch-BM to stop the drift against simple bots"]

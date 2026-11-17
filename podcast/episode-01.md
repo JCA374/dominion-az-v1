@@ -1,0 +1,21 @@
+# Episode 01: How a card game player learns to buy by imagining shuffles
+
+Welcome to the first episode about this project. It teaches a computer player to make one kind of decision in the card game Dominion: what to buy. I want this episode to explain how it works, so that the later ones make sense.
+
+First, the game. In Dominion every player starts with a small deck of ten cards. Each turn you draw five, play them, count your coins, and buy one new card. Treasure makes later turns richer. Victory cards score points, but they clog your hand. And ten action cards are dealt for each game, so every game has a different set of options. The game ends when the Provinces run out. Most points wins.
+
+The buy is the hard part. Say you have six coins on turn nine. A Gold makes every later turn richer. A Duchy is three points now and a dead card forever after. A Witch hands your opponent a curse every time you play it. Which one is right depends on how long the game will last, and on cards you cannot see yet.
+
+The starting point is an older project. There, a genetic algorithm evolved priority lists. A priority list says, for example, buy a Province if you can, else a Gold, else a Witch. Those evolved lists are strong. They are also the opponent here, and they play every decision except the buy, for both players. So when this player wins more than half the games, it is because of its buys alone.
+
+The new player has two parts. The first is a small neural network. It reads one hundred and seventy five numbers about the game: the cards each player owns, what is left in my draw pile, what is left on the table, the coins, the score. It answers two things. How likely am I to win from here? And which card would I buy?
+
+The second part is a search. Before every buy, the player imagines the rest of the game four hundred times. In each imagined game, it reshuffles everything it cannot see. My own draw pile gets a new order. The opponent's hand and deck get dealt again from what I know they own. Then it walks down a tree of buy decisions, mine and the opponent's. The network says which buys look promising, so the search tries those first. When the walk reaches a position it has never seen, it scores it. Half of that score is the network's own guess. The other half comes from playing the game out to the end with the evolved priority list.
+
+After four hundred imagined games, the player buys the card it tried most often. Because each imagined game used a different shuffle, the choice is good on average over the luck of the draw, instead of good for one lucky guess.
+
+Then comes the learning loop, the idea behind AlphaZero. The player plays a thousand games, mostly against itself and some against the evolved list. Every searched buy becomes a lesson for the network: in this position, the search chose this card, and this is who won in the end. The network trains on the last five rounds of lessons. A better network guides the next search better, and the search teaches the network again.
+
+Before any of that, the network learns by imitation. It watched twelve thousand games of the evolved lists and learned to copy their buys. So it starts as a copy of the opponent, and the search has to find where the copy can do better.
+
+The goal was to win sixty five percent of a thousand fresh games against the evolved list, on five hundred card sets never used in training, each played from both seats. In the next episode I'll tell you how the first attempt failed within a single round, and what that taught me.

@@ -1,0 +1,21 @@
+{
+ "t": "2026-11-17 09:42:16",
+ "label": "r2 search, cpuct=0.75",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.6755,
+ "ci": [
+  0.6459,
+  0.7038
+ ],
+ "big_money": 0.845,
+ "smithy_bm": 0.76,
+ "witch_bm": 0.6825,
+ "sims": 400,
+ "lam": 0.5,
+ "cpuct": 0.75,
+ "ptemp": 1.0,
+ "peps": 0.0,
+ "secs": 161
+}

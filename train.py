@@ -48,6 +48,8 @@ CFG = {
     "prior_temp": 1.0,      # search prior = softmax(logits / prior_temp) ...
     "prior_eps": 0.0,       # ... mixed with this share of uniform (a sharp net starves PUCT of exploration)
     "vq": 0.0,              # value target = (1 - vq) * game result + vq * the search's root value
+    "value_weight": 1.0,    # weight of the value loss
+    "l2": 1e-4,
 }
 OPPONENTS = ["Big Money", "Smithy-BM", "Witch-BM", "GA base"]
 BOTS = OPPONENTS[:3]
@@ -276,11 +278,15 @@ def main():
               "selfplay_turns": float(np.mean([g["turns"] for g in games])),
               "root_q": float(np.mean(np.concatenate([g["Q"] for g in games]))),
               "games_per_s": len(games) / t_play}
-        buffer.append(concat(games))
+        new = concat(games)
+        fresh = net.evaluate(params, nh, new)          # before training on them: an honest out-of-sample number
+        sp.update({"value_mse_fresh": fresh["value_mse"], "policy_acc_fresh": fresh["policy_acc"]})
+        buffer.append(new)
         buffer = buffer[-cfg["buffer_iters"]:]
         data = concat(buffer)
         tt = time.time()
-        m = net.train(params, nh, data, opt, epochs=cfg["epochs"], batch=cfg["batch"], seed=it)
+        m = net.train(params, nh, data, opt, epochs=cfg["epochs"], batch=cfg["batch"], seed=it,
+                      value_weight=cfg["value_weight"], l2=cfg["l2"])
         t_train = time.time() - tt
         np.save(os.path.join(d, f"net_{it}.npy"), params)
         p = os.path.join(d, f"net_{it}.npy")
@@ -318,7 +324,8 @@ def make_row(it, t0, games, samples, m, sp, ev_s, ev_n, base_eval, data, cfg) ->
             row[f"{tag}_{o.replace(' ', '_').replace('-', '_')}"] = round(ev[o], 4)
         row[f"{tag}_bots"] = round(ev["bots"], 4)
     row["search_vs_ga_ci"] = round(ci95(ev_s["GA base"], n_opp), 4)
-    for k in ("selfplay_vs_ga", "selfplay_turns", "root_q", "games_per_s", "t_play", "t_train", "t_iter"):
+    for k in ("selfplay_vs_ga", "selfplay_turns", "root_q", "games_per_s", "t_play", "t_train", "t_iter",
+              "value_mse_fresh", "policy_acc_fresh"):
         row[k] = round(sp[k], 4) if k in sp else ""
     return row
 

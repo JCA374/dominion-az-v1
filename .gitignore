@@ -6,3 +6,6 @@ publish_loop.pid
 *.so
 *.so.*
 runs/
+voice/*/audio/
+voice/*/*.wav
+podcast/publish_*.log

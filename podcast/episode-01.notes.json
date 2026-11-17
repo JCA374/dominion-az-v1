@@ -1,0 +1,5 @@
+["Dominion's buy decision: treasure, victory cards or one of 10 action cards dealt per game",
+ "The opponent and the warm start: dominion-v1's evolved priority lists (GA genomes), which also play every non-buy decision on both sides",
+ "The net: 175 inputs, two hidden layers of 128, a buy distribution and a win estimate",
+ "The search: 400 simulations per buy, every hidden card reshuffled in each (IS-MCTS with determinization); leaf = half net, half GA rollout",
+ "The goal: 65% of 1,000 fresh games against the GA base genome"]

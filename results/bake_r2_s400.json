@@ -1,0 +1,21 @@
+{
+ "t": "2026-11-17 09:39:35",
+ "label": "r2 search 400 sims (lam 0.5)",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.7015,
+ "ci": [
+  0.6724,
+  0.729
+ ],
+ "big_money": 0.825,
+ "smithy_bm": 0.765,
+ "witch_bm": 0.64,
+ "sims": 400,
+ "lam": 0.5,
+ "cpuct": 1.5,
+ "ptemp": 1.0,
+ "peps": 0.0,
+ "secs": 158
+}

@@ -193,9 +193,27 @@ static int select_puct(const az_node *nd, const int *ok, float cpuct) {
     return pick;
 }
 
+/* Rollout buys: 0 = the GA genome (default), 1 = the net's argmax (actions stay with the genome). */
+static int g_rollout_net;
+void az_set_rollout(int net) { g_rollout_net = net; }
+
+static int net_buy(const az_net *net, const de_game *g, int me, const int *opts, int n, int may_pass) {
+    float x[AZ_NF], lg[AZ_NA], best = -1e30f;
+    int ok[AZ_NA], a = AZ_PASS;
+    for (int i = 0; i < AZ_NA; i++) ok[i] = 0;
+    for (int i = 0; i < n; i++) ok[opts[i]] = 1;
+    if (may_pass) ok[AZ_PASS] = 1;
+    az_features(g, me, x);
+    net_eval(net, x, lg);
+    for (int i = 0; i < AZ_NA; i++) if (ok[i] && lg[i] > best) { best = lg[i]; a = i; }
+    return a == AZ_PASS ? -1 : a;
+}
+
 static int sim_decide(void *ctx, const de_game *g, int kind, int player, int subject,
                       const int *opts, int n, int may_pass) {
     az_sim *s = ctx;
+    if (s->rolling && g_rollout_net && kind == DE_BUY && g->nplayers == 2)
+        return net_buy(s->net, g, player, opts, n, may_pass);
     if (kind != DE_BUY || g->nplayers != 2 || s->rolling) {
         ga_agent ga = {s->genome, 0};
         return ga_decide(&ga, g, kind, player, subject, opts, n, may_pass);
@@ -216,7 +234,8 @@ static int sim_decide(void *ctx, const de_game *g, int kind, int player, int sub
         }
         s->leaf_v = player == s->me ? v : -v;
         if (s->lambda >= 1) longjmp(s->jb, 1);
-        s->rolling = 1;                             /* play it out with the genome */
+        s->rolling = 1;                             /* play it out with the genome (or the net's buys) */
+        if (g_rollout_net) return net_buy(s->net, g, player, opts, n, may_pass);
         ga_agent ga = {s->genome, 0};
         return ga_decide(&ga, g, kind, player, subject, opts, n, may_pass);
     }

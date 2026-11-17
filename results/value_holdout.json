@@ -1,0 +1,23 @@
+{
+ "games": 600,
+ "decisions": 27511,
+ "player": "runs/r2/net_357.npy",
+ "zero_mse": 0.9746283292770386,
+ "nets": {
+  "runs/warm/net_0.npy": {
+   "mse": 0.677,
+   "mse_turn_lt_10": 0.8999,
+   "mse_turn_ge_10": 0.5267
+  },
+  "runs/r2/net_100.npy": {
+   "mse": 0.9152,
+   "mse_turn_lt_10": 1.1563,
+   "mse_turn_ge_10": 0.7525
+  },
+  "runs/r2/net_357.npy": {
+   "mse": 1.1656,
+   "mse_turn_lt_10": 1.3935,
+   "mse_turn_ge_10": 1.0119
+  }
+ }
+}

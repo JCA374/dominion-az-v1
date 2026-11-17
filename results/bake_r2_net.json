@@ -1,0 +1,18 @@
+{
+ "t": "2026-11-17 09:26:14",
+ "label": "r2 net alone (no search)",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.667,
+ "ci": [
+  0.6372,
+  0.6955
+ ],
+ "big_money": 0.8325,
+ "smithy_bm": 0.755,
+ "witch_bm": 0.645,
+ "sims": 0,
+ "lam": 0.5,
+ "secs": 1
+}

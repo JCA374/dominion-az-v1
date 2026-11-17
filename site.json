@@ -1,30 +1,176 @@
 {
-  "title": "Dominion AZ-light",
-  "icon": "🃏",
-  "repo": "JCA374/dominion-az-v1",
-  "tabs": [["index.html", "Log"], ["model.html", "The model"], ["senses.html", "How it sees"], ["play.html", "Play"],
-           ["speed.html", "Speed"], ["lessons.html", "Lessons"]],
-  "goal": {"metric": "score", "target": 0.65, "label": "Score vs GA base",
-           "columns": [["big_money", "vs Big Money"], ["smithy_bm", "vs Smithy-BM"], ["witch_bm", "vs Witch-BM"]]},
-  "goal_text": "head to head against the GA base genome (same action play, GA buys), 1,000 fresh games: 500 unseen kingdoms, both seats",
-  "names": {"baseline_ga_base": "GA base genome (portfolio-v2 specialist)",
-            "bake_leaf_lam1_s400": "Leaf = net value only (400 sims)",
-            "bake_leaf_lam0.5_s400": "Leaf = ½ net + ½ GA rollout (400 sims)",
-            "bake_leaf_lam0_s400": "Leaf = GA rollout only (400 sims)",
-            "bake_leaf_lam1_s1600": "Leaf = net value only (1600 sims)",
-            "bake_leaf_lam0.5_s1600": "Leaf = ½ net + ½ GA rollout (1600 sims)",
-            "bake_leaf_lam0_s1600": "Leaf = GA rollout only (1600 sims)"},
-  "chart": {"x": "iter", "x_scale": 1, "x_label": "iteration (1,000 self-play games each)", "y_label": "score %",
-            "series": [{"key": "search_GA_base", "label": "search vs GA base (200 eval games)", "style": "both", "color": "--accent"},
-                       {"key": "net_GA_base", "label": "net alone vs GA base", "style": "both", "color": "--muted"},
-                       {"key": "search_bots", "label": "search vs the 3 bots", "style": "both", "color": "--good"},
-                       {"key": "ga_bots", "label": "GA base vs the 3 bots", "style": "line", "color": "--warn"},
-                       {"key": "selfplay_vs_ga", "label": "self-play games vs GA (with exploration)", "style": "points", "color": "--bad"}]},
-  "cards": [{"label": "Iteration", "key": "iter", "sub": "1,000 self-play games each"},
-            {"label": "Search vs GA base", "key": "search_GA_base", "fmt": "pct", "sub": "200 eval games, ±7%"},
-            {"label": "Search vs bots", "key": "search_bots", "fmt": "pct", "sub": "GA base: 75.8%"},
-            {"label": "Net alone vs GA", "key": "net_GA_base", "fmt": "pct", "sub": "no search"}],
-  "alive_pattern": "^.venv/bin/python -u train.py --run {run}( |$)",
-  "replay_kinds": [],
-  "push_globs": ["runs/*/stats.csv", "runs/*/events.jsonl", "runs/*/config.json", "runs/*/baseline.json"]
+ "title": "Dominion AZ-light",
+ "icon": "\ud83c\udccf",
+ "repo": "JCA374/dominion-az-v1",
+ "goal": {
+  "metric": "score",
+  "target": 0.65,
+  "label": "Score vs GA base",
+  "columns": [
+   [
+    "big_money",
+    "vs Big Money"
+   ],
+   [
+    "smithy_bm",
+    "vs Smithy-BM"
+   ],
+   [
+    "witch_bm",
+    "vs Witch-BM"
+   ]
+  ]
+ },
+ "goal_text": "head to head against the GA base genome (same action play, GA buys), 1,000 fresh games: 500 unseen kingdoms, both seats",
+ "names": {
+  "baseline_ga_base": "GA base genome (portfolio-v2 specialist)",
+  "bake_leaf_lam1_s400": "Leaf = net value only (400 sims)",
+  "bake_leaf_lam0.5_s400": "Leaf = \u00bd net + \u00bd GA rollout (400 sims)",
+  "bake_leaf_lam0_s400": "Leaf = GA rollout only (400 sims)",
+  "bake_leaf_lam1_s1600": "Leaf = net value only (1600 sims)",
+  "bake_leaf_lam0.5_s1600": "Leaf = \u00bd net + \u00bd GA rollout (1600 sims)",
+  "bake_leaf_lam0_s1600": "Leaf = GA rollout only (1600 sims)"
+ },
+ "chart": {
+  "x": "iter",
+  "x_scale": 1,
+  "x_label": "iteration (1,000 self-play games each)",
+  "y_label": "score %",
+  "series": [
+   {
+    "key": "search_GA_base",
+    "label": "search vs GA base (200 eval games)",
+    "style": "both",
+    "color": "--accent"
+   },
+   {
+    "key": "net_GA_base",
+    "label": "net alone vs GA base",
+    "style": "both",
+    "color": "--muted"
+   },
+   {
+    "key": "search_bots",
+    "label": "search vs the 3 bots",
+    "style": "both",
+    "color": "--good"
+   },
+   {
+    "key": "ga_bots",
+    "label": "GA base vs the 3 bots",
+    "style": "line",
+    "color": "--warn"
+   },
+   {
+    "key": "selfplay_vs_ga",
+    "label": "self-play games vs GA (with exploration)",
+    "style": "points",
+    "color": "--bad"
+   }
+  ]
+ },
+ "cards": [
+  {
+   "label": "Iteration",
+   "key": "iter",
+   "sub": "1,000 self-play games each"
+  },
+  {
+   "label": "Search vs GA base",
+   "key": "search_GA_base",
+   "fmt": "pct",
+   "sub": "200 eval games, \u00b17%"
+  },
+  {
+   "label": "Search vs bots",
+   "key": "search_bots",
+   "fmt": "pct",
+   "sub": "GA base: 75.8%"
+  },
+  {
+   "label": "Net alone vs GA",
+   "key": "net_GA_base",
+   "fmt": "pct",
+   "sub": "no search"
+  }
+ ],
+ "alive_pattern": "^.venv/bin/python -u train.py --run {run}( |$)",
+ "replay_kinds": [],
+ "push_globs": [
+  "runs/*/stats.csv",
+  "runs/*/events.jsonl",
+  "runs/*/config.json",
+  "runs/*/baseline.json"
+ ],
+ "stale_minutes": 60,
+ "charts": [
+  {
+   "title": "Net alone vs the opponents",
+   "y_label": "score %",
+   "percent": true,
+   "series": [
+    {
+     "key": "net_GA_base",
+     "label": "net vs GA base"
+    },
+    {
+     "key": "net_bots",
+     "label": "net vs 3 bots"
+    }
+   ]
+  },
+  {
+   "title": "How often the net already picks the search's buy",
+   "y_label": "agreement %",
+   "percent": true,
+   "series": [
+    {
+     "key": "policy_acc",
+     "label": "net argmax = searched buy (training data)"
+    }
+   ]
+  },
+  {
+   "title": "Value error",
+   "percent": false,
+   "y_label": "mean squared error",
+   "series": [
+    {
+     "key": "value_mse",
+     "label": "value MSE (outcome \u00b11)"
+    }
+   ]
+  },
+  {
+   "title": "Policy loss",
+   "percent": false,
+   "series": [
+    {
+     "key": "policy_ce",
+     "label": "cross-entropy to the target"
+    }
+   ]
+  },
+  {
+   "title": "Self-play speed",
+   "percent": false,
+   "y_label": "games / s",
+   "series": [
+    {
+     "key": "games_per_s",
+     "label": "self-play games per second (7 workers)"
+    }
+   ]
+  },
+  {
+   "title": "Search's own win estimate",
+   "percent": false,
+   "series": [
+    {
+     "key": "root_q",
+     "label": "mean root Q in self-play"
+    }
+   ]
+  }
+ ]
 }

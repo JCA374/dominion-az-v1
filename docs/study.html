@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study</title>
+<link rel="stylesheet" href="style.css?v=3f2f833f">
+</head>
+<body>
+<main>
+<h1>Study this project</h1>
+<p class="lede">For someone who wants to learn from this project rather than follow it: what to read in which order, the ideas
+you need, the words we use, how to run it yourself, and a few exercises.</p>
+
+<section>
+  <h2>Reading order</h2>
+  <ol id="order">
+    <li><a href="index.html">Overview</a>: what is learned, the measure, the pipeline diagram. 5 minutes.</li>
+    <li><a href="inputs.html">How it sees</a>: the 175 numbers the net gets at a buy, and what only the search sees
+      (nothing hidden: it reshuffles instead). 5 minutes.</li>
+    <li><a href="model.html">The model</a>: why Dominion needs IS-MCTS, the network, the leaf value, the target, and
+      the pictures of the real net (how sharp its policy is matters for everything after iteration 100). 15 minutes.</li>
+    <li><a href="training.html">Training</a>: the progress chart and the goal table. Notice the line flattening at
+      about 69% from iteration 100 on, and the "net alone" line almost catching the search. 5 minutes.</li>
+    <li><a href="lessons.html">Lessons</a> and the <a href="log.html">Log</a> (filter: Notes): every experiment and
+      what it showed. 10 minutes. The <a href="podcast/">Podcast</a> tells the same story by ear.</li>
+    <li>The code, in this order: <code>c/az.c</code> (<code>search</code>, <code>select_puct</code>,
+      <code>sim_decide</code>, <code>eval_priors</code>: the whole algorithm in ~250 lines of C),
+      <code>az/net.py</code> (the MLP and its gradient by hand), <code>train.py</code> (the loop),
+      <code>experiments/goal_check.py</code> (how every claim is measured). 1–2 hours.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Key concepts</h2>
+<div class="box"><h3>Search plus a net beats either alone, while they disagree</h3>
+  <p>The net is fast intuition; the search is slow checking. AlphaZero's loop works because the search, guided by the
+  net, finds better moves than the net would play, and the net then learns them. <b>Here:</b> at the warm start the
+  search added 8 points (net 50% → search 58% vs the GA). <b>What people get wrong:</b> the loop only improves while
+  the search can disagree with the net. Once the net predicts the searched buy 98% of the time, self-play mostly
+  teaches the net what it already knows (see the "agreement" chart on Training).</p></div>
+<div class="box"><h3>Determinization and IS-MCTS</h3>
+  <p>In a game with hidden cards, the search can't know the true deck order, so each simulation guesses one
+  (<code>de_hide</code>) and the tree is keyed only by what the player has seen: the sequence of buys. Averaging over
+  400 guesses gives the value of a buy over the luck of the draw. <b>Here:</b> <code>search()</code> in
+  <code>c/az.c</code>. <b>What people get wrong:</b> searching the single true deal ("cheating") looks much stronger
+  in testing and is worthless in a real game.</p></div>
+<div class="box"><h3>PUCT and the prior</h3>
+  <p>Each simulation picks the buy with the best "average result + cpuct × prior × √(total visits) / (1 + visits)".
+  A buy the net gives 0.1% hardly ever gets visited, however good it is. <b>Here:</b> <code>select_puct</code>.
+  <b>What people get wrong:</b> thinking more simulations always fix this. With a near one-hot prior, 400 or 1,600
+  simulations mostly confirm the net's choice; the prior temperature experiments on the Log test exactly this.</p></div>
+<div class="box"><h3>Leaf evaluation: value net vs rollout</h3>
+  <p>When a simulation reaches a new position it must score it. A value net is cheap but here it is weak (the winner
+  of a close Dominion game is hard to predict); a rollout to the end with the GA genome is unbiased but noisy. Mixing
+  half and half beat both (58% vs 53% and 54% at 400 simulations). <b>Where:</b> <code>lam</code> in
+  <code>train.py</code>, <code>results/bake_leaf_*</code>. <b>What people get wrong:</b> more search with a bad value
+  net got <i>worse</i> (53% → 48% from 400 to 1,600 simulations): the search chases the net's errors.</p></div>
+<div class="box"><h3>The policy target</h3>
+  <p>What the net learns to predict at each searched buy. AlphaZero uses the visit shares; this project uses the
+  single buy the search chose (expert iteration). <b>Why:</b> Dominion's buys are often nearly equal, so the visit
+  shares were mostly the net's own prior plus noise, and training on them collapsed the net (52% → 24% in one
+  iteration, run r1). <b>What people get wrong:</b> the one-hot target has its own cost: it drives the policy towards
+  certainty, which later starves the search of exploration.</p></div>
+<div class="box"><h3>Measuring a win rate honestly</h3>
+  <p>A 200-game evaluation has a 95% interval of ±7 points; 1,000 games ±3. The best of many 200-game checks is
+  flattered by luck (winner's curse). <b>Here:</b> per-iteration evaluation (the chart) vs the goal check (the
+  table, fresh kingdoms every model sees the same). <b>What people get wrong:</b> reading a 3-point jump between two
+  iterations as progress.</p></div>
+<div class="box"><h3>Same actions, different buys</h3>
+  <p>Both players use the same GA genome for every non-buy decision, so a score above 50% is caused by the buys
+  alone. <b>Where:</b> <code>az_decide</code> hands every non-buy decision to <code>ga_decide</code>. <b>What people
+  get wrong:</b> comparing against an opponent that also plays its actions differently, and crediting the buys.</p></div>
+</section>
+
+<section>
+  <h2>Glossary</h2>
+  <p class="muted small">From <code>glossary.md</code> in the repo (one <code>**term** — meaning</code> per line). The podcast narration uses the same list for names that need a pronunciation.</p>
+  <dl class="glossary" id="glossary"></dl>
+</section>
+
+<section>
+  <h2>Reproduce it</h2>
+<p>On an 8-core laptop CPU (Intel i5-8250U, no GPU, 8 GB RAM), Linux, Python 3.14, gcc:</p>
+<pre>git clone --recursive https://github.com/JCA374/dominion-az-v1 && cd dominion-az-v1
+python3 -m venv .venv && .venv/bin/pip install numpy pytest pillow matplotlib
+.venv/bin/python -m pytest -q          # builds az.so (C, ~5 s) and runs the parity tests: "6 passed" in ~7 s
+.venv/bin/python -u train.py --run mine --set iterations=10
+    # warm start: 12,000 GA games + 8 epochs (~3 min), evaluation of net 0 (~3 min),
+    # then ~4 min per iteration. Prints e.g.
+    # iter 1: search Big M=0.84 Smith=0.73 Witch=0.66 GA ba=0.59 ...
+.venv/bin/python experiments/goal_check.py runs/mine/net_10.npy --name mine10
+    # 1,600 fresh games, ~2.5 min: results/goal_mine10.json, e.g. "score": 0.63 (GA base = 0.50)
+.venv/bin/python experiments/goal_check.py runs/mine/net_10.npy --name mine10_net --sims 0   # the net alone, 1 s</pre>
+<p>Expect the score against the GA base to rise from ~58% (net 0 with search) to ~63–65% after 10 iterations, and
+to flatten near 69% after ~100 (about 7 hours).</p>
+</section>
+
+<section>
+  <h2>Exercises</h2>
+<ol>
+  <li><b>Easy: what does search add?</b> Run <code>goal_check.py</code> on the same net with <code>--sims 0</code>,
+    <code>100</code>, <code>400</code> and <code>1600</code>. Plot score against simulations. Expect a large gain from
+    0 to 100 for net 0 and a small one for net 357. Why the difference?</li>
+  <li><b>Easy: the leaf mix.</b> Same net, <code>--lam 0</code>, <code>0.5</code>, <code>1</code>. With the
+    warm-start net the mix won. Does the trained net's value head deserve more weight now?</li>
+  <li><b>Medium: soften the prior.</b> <code>--ptemp 2</code> and <code>--peps 0.25</code> flatten the net's prior
+    inside the search (<code>eval_priors</code> in <code>c/az.c</code>). Measure the score and also how often the
+    searched buy differs from the net's argmax. More disagreement is only useful if the score holds.</li>
+  <li><b>Medium: the policy target.</b> In <code>train.py</code> set <code>target=0</code> (visit shares) for a run
+    from the warm start and watch the "net alone" line in the first 3 iterations. Then try <code>target=1</code>
+    with <code>c_scale</code> 0.3. Expect the first to collapse; explain why with the visit counts of one decision.</li>
+  <li><b>Hard: a better value target.</b> The value head learns the final result (±1), a very noisy label. The search
+    also records its root value <code>Q</code> for every decision (<code>az/selfplay.py</code>). Train the value on
+    (z + Q) / 2 instead (<code>az/net.py</code> <code>train</code>), then repeat exercise 2. Does the net's value
+    now earn a larger lam?</li>
+</ol>
+</section>
+</main>
+<script src="site.js?v=dc12a212"></script>
+<script src="common.js?v=958183f8"></script>
+<script src="project.js?v=3ef4b063"></script>
+<script src="study.js?v=ca69f153"></script>
+</body>
+</html>

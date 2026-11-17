@@ -1,0 +1,21 @@
+{
+ "t": "2026-11-17 10:01:48",
+ "label": "r2 search, prior temperature 4",
+ "note": "",
+ "policy": "runs/r2/net_357.npy",
+ "n": 1000,
+ "score": 0.691,
+ "ci": [
+  0.6617,
+  0.7189
+ ],
+ "big_money": 0.855,
+ "smithy_bm": 0.7325,
+ "witch_bm": 0.665,
+ "sims": 400,
+ "lam": 0.5,
+ "cpuct": 1.5,
+ "ptemp": 4.0,
+ "peps": 0.0,
+ "secs": 190
+}

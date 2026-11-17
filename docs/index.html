@@ -3,42 +3,113 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dominion AZ-light</title>
-<link rel="stylesheet" href="style.css?v=ea0a339d">
+<title>Overview</title>
+<link rel="stylesheet" href="style.css?v=3f2f833f">
 </head>
 <body>
 <main>
 <header class="hero">
   <h1>Teaching a Dominion player to buy better by searching through the shuffles it can't see</h1>
-  <p class="lede">A light version of AlphaZero for the card game Dominion (base set, Steam rules). At every buy it runs
-an <b>information-set Monte Carlo tree search</b>: each of its 400 simulations deals the hidden cards anew (its own draw
-order, the opponent's hand and deck), so the search averages over the luck of the draw instead of guessing it. A small
-neural network guides the search and learns from it in self-play. <b>The goal:</b> win 65% of 1,000 fresh games
-head to head against the evolved GA genome it started from (same play of action cards; only the buys differ).</p>
+  <p class="lede">A light version of AlphaZero for the card game Dominion (base set, 2nd edition, Steam rules). At every buy
+it runs an <b>information-set Monte Carlo tree search</b> that deals the hidden cards anew in each of its 400 simulations,
+and a small neural network guides the search and learns from it in self-play. <b>The goal:</b> win 65% of 1,000 fresh
+games head to head against the evolved GA genome it started from, with the same play of action cards on both sides so
+only the buys differ. Passed at iteration 10 (63% → 69%); the run now asks how far past it this method can go.</p>
   <p class="countdown" id="countdown"></p>
-  <p class="muted" id="updated"></p>
 </header>
-<section class="cards" id="cards"></section>
+
 <section>
-  <h2>Goal table</h2>
-  <p class="muted">Every agent measured on episodes it never saw. The 95% interval is a Wilson interval.</p>
-  <div class="tablewrap"><table class="t" id="goaltable"></table></div>
+  <h2>Status now</h2>
+  <div class="cards" id="cards"></div>
+  <p class="muted small">Numbers come from the run files and update every 15 minutes. Details on the <a href="training.html">Training</a> tab.</p>
 </section>
+
 <section>
-  <h2>Progress</h2>
-  <div class="chartbox"><div class="h"><canvas id="chart"></canvas></div></div>
-  <p class="muted small" id="chartnote"></p>
+  <h2>What this is</h2>
+  <p>Dominion is a deck-building card game. Each turn you play the cards in your hand, count your coins and <b>buy</b>
+  one card for your deck: treasure (Copper $0, Silver $3, Gold $6) to buy more later, victory cards (Estate, Duchy,
+  Province $8) that score but clog your hand, or one of 10 action cards dealt for this game (the <i>kingdom</i>) out of
+  the 26 in the base set. The game ends when the Provinces or any three piles run out; most victory points wins.</p>
+  <p><b>A concrete example.</b> Turn 9, you have $6. Gold makes every later turn richer; Duchy is 3 points now and a
+  dead card in every later hand; Witch ($5) would hand your opponent a Curse (−1 point) each time you play it. Which is
+  best depends on how far the game is from ending, what the opponent is doing and which cards you will draw next, which
+  you can't see. That is the decision this project learns. Every other decision (which action to play, what to trash,
+  what to gain with Workshop) is made by the evolved genome of <a href="https://github.com/JCA374/dominion-v1">dominion-v1</a>,
+  on both sides of every comparison.</p>
+  <p><b>The measure.</b> 1,000 games against the GA base genome: 500 kingdoms never used in training or in the
+  per-iteration evaluation, each played twice with the seats swapped. A win counts 1, a shared win ½. The 95% interval
+  (Wilson) on 1,000 games is about ±3 points. The GA itself scores 50% by definition; the target was 65%.</p>
+  <p><b>Why it is hard.</b> Dominion hides information (your draw order, the opponent's hand) and is noisy: two
+  similar players stay close to a coin flip until late, and a single game result says little about any one buy. The
+  GA genome is a strong opponent: a priority list evolved over millions of games, specialised per kind of kingdom.</p>
 </section>
+
 <section>
-  <h2>Log <span class="muted small">newest first · replays play once, click to watch again</span></h2>
-  <div id="log"></div>
+  <h2>Approach</h2>
+  <p>Start from the GA: 12,000 of its games teach a small network (175 inputs → 128 → 128 → 34 buy logits + a win
+  estimate; 43,555 numbers) to copy its buys. Then loop. Each iteration plays 1,000 self-play games in which every buy
+  is chosen by a search: 400 simulations, each one shuffling the hidden cards anew, walking a tree of buy decisions
+  guided by the net, and scoring the position at its edge by half the net's win estimate and half the result of
+  finishing the game with the GA genome. The net then learns, from the last 5 iterations' games, to predict the buy the
+  search chose and who won. A fixed evaluation (800 games) runs every iteration and a goal check on fresh games every
+  10.</p>
+<pre class="diagram">
+  GA genomes (dominion-v1)                    engine/ (rules, C)
+        │ 12,000 games                              │
+        ▼                                           ▼
+  ┌────────────┐   net    ┌───────────────────────────────────────┐
+  │ warm start │ ───────▶ │ self-play: 1,000 games / iteration     │
+  │  imitation │          │  every buy = IS-MCTS, 400 simulations  │
+  └────────────┘          │  leaf = ½ net value + ½ GA rollout     │
+                          └───────────────────┬───────────────────┘
+        ▲                                     │ (state, chosen buy, result)
+        │ new net                             ▼
+  ┌─────┴──────────────┐          ┌──────────────────────────────┐
+  │ train (numpy, Adam) │ ◀─────── │ replay buffer: last 5 iters  │
+  └─────┬──────────────┘          └──────────────────────────────┘
+        │ every iteration                    every 10 iterations
+        ▼                                     ▼
+  evaluation: 800 fixed games      goal check: 1,000 fresh games vs GA
+  (Big Money, Smithy-BM,           + 200 each vs the bots
+   Witch-BM, GA base)  ──────────▶  site (this page, every 15 min)
+</pre>
+  <p><b>Real numbers</b> (8-core laptop CPU, i5-8250U): one simulation costs about 88 µs, so a searched game takes
+  0.8 s; an iteration (1,000 self-play games on 7 workers + 800 evaluation games + training) takes about 4 minutes.
+  Run r2 did 357 iterations in 24 hours.</p>
+</section>
+
+<section>
+  <h2>Decisions <span class="muted small">newest first · why things are the way they are</span></h2>
+  <p class="muted small">Logged with <code>python experiments/journal.py --decision "title" "what was chosen and why" "what was rejected"</code>.</p>
+  <div id="decisions"></div>
+</section>
+
+<section>
+  <h2>How to read this site</h2>
+  <div id="guide"></div>
+</section>
+
+<section>
+  <h2>Repo layout</h2>
+<pre class="diagram">
+c/az.c              the hot path in C: features, net forward, IS-MCTS, the playing agent, records, clip trace
+az/                 Python: core.py (ctypes bridge), net.py (numpy MLP + Adam), selfplay.py (game jobs),
+                    base.py (which GA genome plays each kingdom)
+train.py            warm start + self-play loop; config CFG at the top; writes runs/&lt;run&gt;/
+experiments/        goal_check.py (fresh-game checks), leaf_value.py, speed.py, journal.py (this site's notes)
+results/            every measured number: goal_*, baseline_*, bake_* (comparisons)
+runs/&lt;run&gt;/         stats.csv, events.jsonl, net_&lt;iter&gt;.npy, ckpt.npz (weights are not pushed)
+engine/             submodule: the rules (dominion-engine), never copied
+dominion-v1/        submodule: the GA genome agent, released genomes, benchmark bots
+tests/              C/Python parity, GA games replay exactly, engine pins agree
+publish.py, site_hooks.py, site.json, docs/    this site
+</pre>
 </section>
 </main>
 <footer>Updated automatically every 15 minutes. Numbers are measured on fresh episodes, not estimated.</footer>
-<script src="site.js?v=95be1df3"></script>
-<script src="common.js?v=448bd7f6"></script>
+<script src="site.js?v=dc12a212"></script>
+<script src="common.js?v=958183f8"></script>
 <script src="project.js?v=3ef4b063"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="app.js?v=fb3b558a"></script>
+<script src="overview.js?v=efe0a978"></script>
 </body>
 </html>
