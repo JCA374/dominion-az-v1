@@ -1,0 +1,5 @@
+["r2 flat at 69-70% (goal checks, 1,000 games) from iteration ~100 to 357",
+ "Net 357 alone 66.7%; search 100 / 400 / 1,600 simulations 67.3% / 70.2% / 69.5%; the net predicts the searched buy 98% of the time",
+ "Softer priors: temperature 2 / 4 → 68.6% / 69.1%; 25% uniform → 48.0%",
+ "Value head error on fresh games 0.68 → 0.92 → 1.17 (warm, iteration 100, 357) while the training log showed 0.19; always predicting a draw: 0.97",
+ "Fix (offline study, 3,000 games): a new value head trained on the search's root value: held-out error 1.24 → 0.70; run r3 trains this way"]

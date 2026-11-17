@@ -1,0 +1,19 @@
+# Episode 03: Three hundred rounds of nothing, and what was wrong
+
+At the end of the last episode, the player had passed its goal. After a hundred rounds of self-play, it won about sixty nine percent of the fresh games against the evolved priority list. Then I let it run for another day. It played two hundred and fifty more rounds, a quarter of a million games. And the number did not move. Sixty nine, seventy, sixty eight, sixty nine. This episode is about why.
+
+The first clue came from asking a simple question. How much does the search actually add? I took the newest network and played the same thousand fresh games four ways. The network alone, with no search at all, won sixty seven percent. With a hundred imagined games per buy, sixty seven. With four hundred, seventy. With sixteen hundred, seventy again. At the very start of training, the search had added seven points on top of the network. Now it added three, and four times more thinking added nothing.
+
+The training log showed the same thing from the other side. The network now predicted the search's chosen card ninety eight percent of the time. That is the trap in this kind of learning. The search teaches the network, and the network guides the search. When they agree on almost everything, self-play has nothing left to teach.
+
+My first idea was that the search was too timid. The network was very sure of itself. For most buys it put ninety nine percent on a single card. A search guided by such a confident network barely looks at anything else. So I made the network's advice softer inside the search, in two ways. A mild softening did nothing. Sixty nine percent. A strong one, where a quarter of the advice was spread evenly over every card, was a disaster. The player dropped to forty eight percent, worse than the opponent it started from.
+
+That disaster was the real clue. When a search looks at every card, and its judgement of each position is noisy, some bad card will look good just by luck. The search then picks exactly that card. It is the same trap as picking the best of many noisy tests. So the problem was not how widely the search looked. It was how well it judged what it saw.
+
+Remember that the search judges a new position half by the network's own win estimate, and half by playing the game out. So I tested the network's win estimate on six hundred fresh games. The result surprised me. It was worse than useless. A guess of fifty fifty for every position would have been more accurate. And it had got worse during training. At the start its error was point six eight, after a hundred rounds point nine two, and at the end one point one seven.
+
+Yet the training log said the error had fallen to point two. The log measured it on the training games themselves. Each game gives about thirty five positions, and they all share one final result. The network saw each of them about ten times. So it learned to recognise the games, not to judge the positions. It memorised.
+
+The fix came from an offline study. I recorded three thousand fresh games, trained different versions on four fifths of them, and tested on the rest. Less training, lower weights, stronger penalties, none of it helped much. Two things did. First, throw away the old win estimate and train a new one on top of the same network. Second, don't teach it the final result of the game. Teach it the search's own estimate for that position. A game's result is one coin flip shared by thirty five positions. The search's estimate is a separate, careful measurement for each one. Together, the error dropped from one point two four to point seven.
+
+Did the player get stronger with the better estimate? Only a little, so far. Seventy percent with the mixed judgement, about the same as before. Seventy with the network's estimate alone, up from sixty eight. So now a new run is training with these fixes, to see whether an honest judge lets self-play climb again. I'll tell you how it goes.
