@@ -72,3 +72,52 @@ def base_genome(kingdom: list[str]) -> dict:
         if all(c in ks for c in m["must"]):
             return m
     raise AssertionError("v2-generalist has no must cards and always qualifies")
+
+
+# ── the new GA base (2026-11-21) ──────────────────────────────────────────────────────────────
+
+PORTFOLIO_V3 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dominion-v1", "models",
+                            "portfolio-v3")
+RR_SEEDS = 100
+_v3 = None
+_v2_picks: dict = {}
+
+
+def members_v3() -> list[dict]:
+    """[{name, must, ints, strategy}] of dominion-v1's portfolio-v3 (the 17 specialists that improved with 1,000 more
+    generations, the 9 at their ceiling as in portfolio-v2, k4)."""
+    global _v3
+    if _v3 is None:
+        from core.strategy import load_strategy
+        from .core import genome_ints
+        with open(os.path.join(PORTFOLIO_V3, "model.json")) as f:
+            man = json.load(f)
+        _v3 = []
+        for m in man["members"]:
+            s = load_strategy(os.path.join(PORTFOLIO_V3, m["file"]))
+            _v3.append({"name": m["name"], "must": m["must"], "ints": genome_ints(s), "strategy": s})
+    return _v3
+
+
+def base_genome_v2(kingdom: list[str]) -> dict:
+    """{name, must, ints} of the new GA base on this kingdom: every portfolio-v3 member whose must cards are dealt
+    plays every other one here (RR_SEEDS seeds, both seats, dominion-v1's C engine) and the best mean score plays.
+    ~0.5 s per kingdom, cached. Measured (dominion-v1 experiments/base_vs_net.py, 1,000 fresh kingdoms): +6.2
+    points against rl-v1's network compared with base_genome (pick rule +5.3, better members +1.5)."""
+    key = tuple(sorted(kingdom))
+    if key not in _v2_picks:
+        from ga.c_bridge import evaluate_vs_opponent_c
+        ks = set(kingdom)
+        el = [m for m in members_v3() if all(c in ks for c in m["must"])]
+        rng = random.Random("rr:" + ",".join(sorted(kingdom)))
+        seeds = [rng.getrandbits(32) for _ in range(RR_SEEDS)]
+        tot = {m["name"]: 0.0 for m in el}
+        for i, x in enumerate(el):
+            for y in el[i + 1:]:
+                r = evaluate_vs_opponent_c(x["strategy"], seeds, sorted(kingdom), y["strategy"])
+                s = r["win_rate"] + r["tie_rate"] / 2
+                tot[x["name"]] += s
+                tot[y["name"]] += 1 - s
+        best = max(el, key=lambda m: tot[m["name"]])
+        _v2_picks[key] = {"name": best["name"], "must": best["must"], "ints": best["ints"]}
+    return _v2_picks[key]
